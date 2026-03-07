@@ -43,3 +43,16 @@ app.*.map.json
 /android/app/debug
 /android/app/profile
 /android/app/release
+
+# Environment files (keep local values out of repo)
+.env
+.env.*
+!.env.example
+!.env.dev.example
+!.env.staging.example
+!.env.prod.example
+
+# Signing and local credentials
+android/key.properties
+**/*.jks
+**/*.keystore

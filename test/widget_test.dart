@@ -6,11 +6,12 @@
 // tree, read text, and verify that the values of widget properties are correct.
 
 import 'package:flutter_test/flutter_test.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:ssa/app/app.dart';
 
 void main() {
   testWidgets('App boots with POS home screen', (WidgetTester tester) async {
-    await tester.pumpWidget(const SsaApp());
+    await tester.pumpWidget(const ProviderScope(child: SsaApp()));
 
     expect(find.text('SSA POS Home'), findsOneWidget);
   });
