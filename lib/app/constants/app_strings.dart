@@ -1,6 +1,14 @@
 class AppStrings {
   static const appName = 'SSA POS';
   static const homeTitle = 'SSA POS Home';
+  static const connectPrinter = 'Connect Printer';
+  static const bluetoothPermissionRequired =
+      'Bluetooth and location permissions are required.';
+  static const permissionSettingsTitle = 'Permission Required';
+  static const permissionSettingsMessage =
+      'Bluetooth and location permissions are permanently denied. Please enable them in app settings.';
+  static const openSettings = 'Open Settings';
+  static const printerConnectedPrefix = 'Connected: ';
 
   static const ok = 'OK';
   static const cancel = 'Cancel';

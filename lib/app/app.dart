@@ -21,8 +21,12 @@ class SsaApp extends ConsumerWidget {
       initialRoute: AppRoutes.home,
       onGenerateRoute: AppRouter.onGenerateRoute,
       builder: (context, child) {
-        if (config.isProduction || child == null) {
-          return child ?? const SizedBox.shrink();
+        if (child == null) {
+          return const SizedBox.shrink();
+        }
+
+        if (config.isProduction) {
+          return child;
         }
 
         return Banner(
