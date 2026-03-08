@@ -3,6 +3,11 @@ import 'package:pos_printer_kit/pos_printer_kit.dart';
 import 'package:ssa/app/config/app_config.dart';
 import 'package:ssa/app/config/app_flavor.dart';
 import 'package:ssa/core/db/app_database.dart';
+import 'package:ssa/core/storage/local_image_storage_service.dart';
+import 'package:ssa/features/pos/data/datasources/voucher_image_local_datasource.dart';
+import 'package:ssa/features/pos/data/datasources/voucher_local_datasource.dart';
+import 'package:ssa/features/pos/data/repositories/voucher_repository_impl.dart';
+import 'package:ssa/features/pos/domain/repositories/voucher_repository.dart';
 import 'package:ssa/core/logging/app_logger.dart';
 import 'package:ssa/core/logging/console_logger.dart';
 import 'package:ssa/core/network/connectivity_service.dart';
@@ -18,7 +23,9 @@ final appLoggerProvider = Provider<AppLogger>((ref) {
 });
 
 final appDatabaseProvider = Provider<AppDatabase>((ref) {
-  return AppDatabase();
+  final database = AppDatabase();
+  ref.onDispose(database.close);
+  return database;
 });
 
 final connectivityServiceProvider = Provider<ConnectivityService>((ref) {
@@ -36,3 +43,26 @@ final printerCoreProvider = ChangeNotifierProvider<PrinterCore>((ref) {
 });
 
 final printerCoreInitializedProvider = StateProvider<bool>((ref) => false);
+
+final voucherLocalDataSourceProvider = Provider<VoucherLocalDataSource>((ref) {
+  final database = ref.watch(appDatabaseProvider);
+  return VoucherLocalDataSource(database);
+});
+
+final voucherRepositoryProvider = Provider<VoucherRepository>((ref) {
+  final localDataSource = ref.watch(voucherLocalDataSourceProvider);
+  return VoucherRepositoryImpl(localDataSource);
+});
+
+final localImageStorageServiceProvider = Provider<LocalImageStorageService>((
+  ref,
+) {
+  return LocalImageStorageService();
+});
+
+final voucherImageLocalDataSourceProvider = Provider<VoucherImageLocalDataSource>(
+  (ref) {
+    final storageService = ref.watch(localImageStorageServiceProvider);
+    return VoucherImageLocalDataSource(storageService: storageService);
+  },
+);

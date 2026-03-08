@@ -7,7 +7,7 @@ import 'package:ssa/features/pos/presentation/pages/pos_home_page.dart';
 import 'package:ssa/shared/providers/app_providers.dart';
 
 void main() {
-  testWidgets('shows bluetooth action and opens printer connect page', (tester) async {
+  testWidgets('opens printer connect page from drawer menu', (tester) async {
     final core = PrinterCore();
 
     await tester.pumpWidget(
@@ -23,9 +23,11 @@ void main() {
       ),
     );
 
-    expect(find.byIcon(Icons.bluetooth_searching), findsOneWidget);
+    expect(find.byIcon(Icons.menu), findsOneWidget);
 
-    await tester.tap(find.byIcon(Icons.bluetooth_searching));
+    await tester.tap(find.byIcon(Icons.menu));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text(AppStrings.connectPrinter));
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 300));
 

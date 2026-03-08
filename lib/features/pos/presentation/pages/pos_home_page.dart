@@ -1,10 +1,16 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:pos_printer_kit/pos_printer_kit.dart';
 import 'package:ssa/app/design_system.dart';
+import 'package:ssa/app/router/app_router.dart';
 import 'package:ssa/core/permissions/bluetooth_permission_service.dart';
+import 'package:ssa/core/printer/printer_connection_health.dart';
+import 'package:ssa/features/pos/presentation/pages/voucher_form_page.dart';
 import 'package:ssa/shared/providers/app_providers.dart';
+import 'package:ssa/shared/widgets/app_drawer.dart';
 
 class PosHomePage extends ConsumerStatefulWidget {
   const PosHomePage({super.key, required this.title});
@@ -16,14 +22,24 @@ class PosHomePage extends ConsumerStatefulWidget {
 }
 
 class _PosHomePageState extends ConsumerState<PosHomePage> {
-  bool _permissionGranted = false;
+  final GlobalKey<VoucherFormSectionState> _voucherFormKey =
+      GlobalKey<VoucherFormSectionState>();
+  Timer? _printerHealthTimer;
+  bool _isSyncingPrinterHealth = false;
 
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _initializeOnStartup();
+      _startPrinterHealthMonitor();
     });
+  }
+
+  @override
+  void dispose() {
+    _printerHealthTimer?.cancel();
+    super.dispose();
   }
 
   Future<void> _initializeOnStartup() async {
@@ -31,15 +47,11 @@ class _PosHomePageState extends ConsumerState<PosHomePage> {
     if (!mounted) {
       return;
     }
-
-    setState(() {
-      _permissionGranted = granted;
-    });
-
     if (!granted) {
       return;
     }
     await _initializePrinterCoreIfNeeded();
+    await _syncPrinterConnectionHealth();
   }
 
   Future<void> _initializePrinterCoreIfNeeded() async {
@@ -52,11 +64,29 @@ class _PosHomePageState extends ConsumerState<PosHomePage> {
     ref.read(printerCoreInitializedProvider.notifier).state = true;
   }
 
-  String _statusText(PrinterCore core) {
-    if (core.hasConnectedPrinter && core.connectedDevice != null) {
-      return '${AppStrings.printerConnectedPrefix}${core.displayName(core.connectedDevice!)}';
+  void _startPrinterHealthMonitor() {
+    _printerHealthTimer?.cancel();
+    _printerHealthTimer = Timer.periodic(
+      const Duration(seconds: 3),
+      (_) => _syncPrinterConnectionHealth(),
+    );
+  }
+
+  Future<void> _syncPrinterConnectionHealth() async {
+    if (!mounted || _isSyncingPrinterHealth) {
+      return;
     }
-    return core.status;
+    final initialized = ref.read(printerCoreInitializedProvider);
+    if (!initialized) {
+      return;
+    }
+    _isSyncingPrinterHealth = true;
+    try {
+      final printerCore = ref.read(printerCoreProvider);
+      await PrinterConnectionHealth.refresh(printerCore);
+    } finally {
+      _isSyncingPrinterHealth = false;
+    }
   }
 
   Future<void> _showOpenSettingsDialog() async {
@@ -84,85 +114,122 @@ class _PosHomePageState extends ConsumerState<PosHomePage> {
     );
   }
 
+  Future<void> _openPrinterConnectPage() async {
+    final printerCore = ref.read(printerCoreProvider);
+    final permissionResult = await BluetoothPermissionService.ensureGranted();
+    if (permissionResult == BluetoothPermissionResult.permanentlyDenied) {
+      if (!mounted) return;
+      await _showOpenSettingsDialog();
+      return;
+    }
+    if (permissionResult != BluetoothPermissionResult.granted) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text(AppStrings.bluetoothPermissionRequired)),
+      );
+      return;
+    }
+
+    await _initializePrinterCoreIfNeeded();
+    await _syncPrinterConnectionHealth();
+
+    if (!mounted) {
+      return;
+    }
+
+    Navigator.of(context).push(
+      MaterialPageRoute<void>(
+        builder: (_) => PrinterConnectPage(core: printerCore),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
-    final printerCore = ref.watch(printerCoreProvider);
-    final isPrinterConnected =
-        ref.watch(printerCoreProvider.select((core) => core.hasConnectedPrinter));
+    final isPrinterConnected = ref.watch(
+      printerCoreProvider.select((core) => core.hasConnectedPrinter),
+    );
 
     return Scaffold(
+      drawer: AppDrawer(
+        activeRoute: AppRoutes.home,
+        onConnectPrinterTap: _openPrinterConnectPage,
+      ),
       appBar: AppBar(
         title: Text(widget.title),
         actions: [
           IconButton(
+            onPressed: _openPrinterConnectPage,
+            icon: Icon(
+              Icons.bluetooth_searching,
+              color: isPrinterConnected
+                  ? AppColors.success
+                  : AppColors.textHint,
+            ),
             tooltip: AppStrings.connectPrinter,
-            icon: const Icon(Icons.bluetooth_searching),
-            color: isPrinterConnected ? AppColors.success : null,
-            onPressed: () async {
-              final permissionResult =
-                  await BluetoothPermissionService.ensureGranted();
-              if (permissionResult == BluetoothPermissionResult.permanentlyDenied) {
-                if (context.mounted) {
-                  await _showOpenSettingsDialog();
-                }
-                return;
-              }
-              if (permissionResult != BluetoothPermissionResult.granted) {
-                if (context.mounted) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content: Text(AppStrings.bluetoothPermissionRequired),
-                    ),
-                  );
-                }
-                return;
-              }
-
-              setState(() {
-                _permissionGranted = true;
-              });
-
-              await _initializePrinterCoreIfNeeded();
-
-              if (!context.mounted) {
-                return;
-              }
-
-              Navigator.of(context).push(
-                MaterialPageRoute<void>(
-                  builder: (_) => PrinterConnectPage(core: printerCore),
+          ),
+          const SizedBox(width: AppDimens.spacing12),
+        ],
+      ),
+      body: ListView(
+        padding: const EdgeInsets.all(AppDimens.pagePadding),
+        children: [
+          Container(
+            padding: const EdgeInsets.all(AppDimens.spacing16),
+            decoration: BoxDecoration(
+              gradient: const LinearGradient(
+                colors: [AppColors.primaryContainer, AppColors.white],
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+              ),
+              borderRadius: BorderRadius.circular(AppDimens.radius16),
+              border: Border.all(color: AppColors.border),
+            ),
+            child: const Row(
+              children: [
+                Icon(Icons.receipt_long, color: AppColors.primary),
+                SizedBox(width: AppDimens.spacing12),
+                Text(
+                  AppStrings.voucherFormTitle,
+                  style: AppTextStyles.titleLarge,
                 ),
-              );
-            },
+              ],
+            ),
+          ),
+          const SizedBox(height: AppDimens.spacing12),
+          Container(
+            padding: const EdgeInsets.all(AppDimens.spacing12),
+            decoration: BoxDecoration(
+              color: AppColors.surface,
+              borderRadius: BorderRadius.circular(AppDimens.radius16),
+              border: Border.all(color: AppColors.border),
+            ),
+            child: VoucherFormSection(
+              key: _voucherFormKey,
+              showPreviewButton: false,
+            ),
           ),
         ],
       ),
-      body: Padding(
-        padding: const EdgeInsets.all(AppDimens.pagePadding),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Container(
-              width: double.infinity,
-              padding: const EdgeInsets.all(AppDimens.spacing12),
-              decoration: BoxDecoration(
-                color: AppColors.surface,
+      bottomNavigationBar: SafeArea(
+        minimum: const EdgeInsets.fromLTRB(
+          AppDimens.pagePadding,
+          AppDimens.spacing12,
+          AppDimens.pagePadding,
+          AppDimens.spacing32,
+        ),
+        child: SizedBox(
+          width: double.infinity,
+          child: ElevatedButton(
+            onPressed: () => _voucherFormKey.currentState?.submitPreview(),
+            style: ElevatedButton.styleFrom(
+              minimumSize: const Size.fromHeight(54),
+              shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(AppDimens.radius12),
-                border: Border.all(color: AppColors.border),
-              ),
-              child: Text(
-                _permissionGranted
-                    ? _statusText(printerCore)
-                    : AppStrings.bluetoothPermissionRequired,
-                style: AppTextStyles.bodyMedium,
               ),
             ),
-            const SizedBox(height: AppDimens.spacing16),
-            const Text(
-              AppStrings.posReadyMessage,
-              style: AppTextStyles.bodyMedium,
-            ),
-          ],
+            child: const Text(AppStrings.printPreview),
+          ),
         ),
       ),
     );
