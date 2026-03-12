@@ -1,5 +1,3 @@
-import 'dart:async';
-
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:permission_handler/permission_handler.dart';
@@ -7,15 +5,12 @@ import 'package:pos_printer_kit/pos_printer_kit.dart';
 import 'package:ssa/app/design_system.dart';
 import 'package:ssa/app/router/app_router.dart';
 import 'package:ssa/core/permissions/bluetooth_permission_service.dart';
-import 'package:ssa/core/printer/printer_connection_health.dart';
 import 'package:ssa/features/pos/presentation/pages/voucher_form_page.dart';
 import 'package:ssa/shared/providers/app_providers.dart';
 import 'package:ssa/shared/widgets/app_drawer.dart';
 
 class PosHomePage extends ConsumerStatefulWidget {
-  const PosHomePage({super.key, required this.title});
-
-  final String title;
+  const PosHomePage({super.key});
 
   @override
   ConsumerState<PosHomePage> createState() => _PosHomePageState();
@@ -24,26 +19,18 @@ class PosHomePage extends ConsumerStatefulWidget {
 class _PosHomePageState extends ConsumerState<PosHomePage> {
   final GlobalKey<VoucherFormSectionState> _voucherFormKey =
       GlobalKey<VoucherFormSectionState>();
-  Timer? _printerHealthTimer;
-  bool _isSyncingPrinterHealth = false;
 
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _initializeOnStartup();
-      _startPrinterHealthMonitor();
     });
   }
 
-  @override
-  void dispose() {
-    _printerHealthTimer?.cancel();
-    super.dispose();
-  }
-
   Future<void> _initializeOnStartup() async {
-    final granted = await BluetoothPermissionService.hasRequiredPermissions();
+    final permissionClient = ref.read(bluetoothPermissionClientProvider);
+    final granted = await permissionClient.hasRequiredPermissions();
     if (!mounted) {
       return;
     }
@@ -51,7 +38,6 @@ class _PosHomePageState extends ConsumerState<PosHomePage> {
       return;
     }
     await _initializePrinterCoreIfNeeded();
-    await _syncPrinterConnectionHealth();
   }
 
   Future<void> _initializePrinterCoreIfNeeded() async {
@@ -64,49 +50,24 @@ class _PosHomePageState extends ConsumerState<PosHomePage> {
     ref.read(printerCoreInitializedProvider.notifier).state = true;
   }
 
-  void _startPrinterHealthMonitor() {
-    _printerHealthTimer?.cancel();
-    _printerHealthTimer = Timer.periodic(
-      const Duration(seconds: 3),
-      (_) => _syncPrinterConnectionHealth(),
-    );
-  }
-
-  Future<void> _syncPrinterConnectionHealth() async {
-    if (!mounted || _isSyncingPrinterHealth) {
-      return;
-    }
-    final initialized = ref.read(printerCoreInitializedProvider);
-    if (!initialized) {
-      return;
-    }
-    _isSyncingPrinterHealth = true;
-    try {
-      final printerCore = ref.read(printerCoreProvider);
-      await PrinterConnectionHealth.refresh(printerCore);
-    } finally {
-      _isSyncingPrinterHealth = false;
-    }
-  }
-
   Future<void> _showOpenSettingsDialog() async {
     await showDialog<void>(
       context: context,
       builder: (dialogContext) {
         return AlertDialog(
-          title: const Text(AppStrings.permissionSettingsTitle),
-          content: const Text(AppStrings.permissionSettingsMessage),
+          title: Text(AppStrings.permissionSettingsTitle),
+          content: Text(AppStrings.permissionSettingsMessage),
           actions: [
             TextButton(
               onPressed: () => Navigator.of(dialogContext).pop(),
-              child: const Text(AppStrings.cancel),
+              child: Text(AppStrings.cancel),
             ),
             TextButton(
               onPressed: () async {
                 Navigator.of(dialogContext).pop();
                 await openAppSettings();
               },
-              child: const Text(AppStrings.openSettings),
+              child: Text(AppStrings.openSettings),
             ),
           ],
         );
@@ -116,7 +77,8 @@ class _PosHomePageState extends ConsumerState<PosHomePage> {
 
   Future<void> _openPrinterConnectPage() async {
     final printerCore = ref.read(printerCoreProvider);
-    final permissionResult = await BluetoothPermissionService.ensureGranted();
+    final permissionClient = ref.read(bluetoothPermissionClientProvider);
+    final permissionResult = await permissionClient.ensureGranted();
     if (permissionResult == BluetoothPermissionResult.permanentlyDenied) {
       if (!mounted) return;
       await _showOpenSettingsDialog();
@@ -125,13 +87,12 @@ class _PosHomePageState extends ConsumerState<PosHomePage> {
     if (permissionResult != BluetoothPermissionResult.granted) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text(AppStrings.bluetoothPermissionRequired)),
+        SnackBar(content: Text(AppStrings.bluetoothPermissionRequired)),
       );
       return;
     }
 
     await _initializePrinterCoreIfNeeded();
-    await _syncPrinterConnectionHealth();
 
     if (!mounted) {
       return;
@@ -151,12 +112,9 @@ class _PosHomePageState extends ConsumerState<PosHomePage> {
     );
 
     return Scaffold(
-      drawer: AppDrawer(
-        activeRoute: AppRoutes.home,
-        onConnectPrinterTap: _openPrinterConnectPage,
-      ),
+      drawer: const AppDrawer(activeRoute: AppRoutes.home),
       appBar: AppBar(
-        title: Text(widget.title),
+        title: Text(AppStrings.homeTitle),
         actions: [
           IconButton(
             onPressed: _openPrinterConnectPage,
@@ -185,10 +143,10 @@ class _PosHomePageState extends ConsumerState<PosHomePage> {
               borderRadius: BorderRadius.circular(AppDimens.radius16),
               border: Border.all(color: AppColors.border),
             ),
-            child: const Row(
+            child: Row(
               children: [
-                Icon(Icons.receipt_long, color: AppColors.primary),
-                SizedBox(width: AppDimens.spacing12),
+                const Icon(Icons.receipt_long, color: AppColors.primary),
+                const SizedBox(width: AppDimens.spacing12),
                 Text(
                   AppStrings.voucherFormTitle,
                   style: AppTextStyles.titleLarge,
@@ -228,7 +186,7 @@ class _PosHomePageState extends ConsumerState<PosHomePage> {
                 borderRadius: BorderRadius.circular(AppDimens.radius12),
               ),
             ),
-            child: const Text(AppStrings.printPreview),
+            child: Text(AppStrings.printPreview),
           ),
         ),
       ),

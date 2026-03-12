@@ -1,7 +1,9 @@
+import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:pos_printer_kit/pos_printer_kit.dart';
 import 'package:ssa/app/config/app_config.dart';
 import 'package:ssa/app/config/app_flavor.dart';
+import 'package:ssa/core/backup/local_backup_service.dart';
 import 'package:ssa/core/db/app_database.dart';
 import 'package:ssa/core/storage/local_image_storage_service.dart';
 import 'package:ssa/features/pos/data/datasources/voucher_image_local_datasource.dart';
@@ -11,7 +13,10 @@ import 'package:ssa/features/pos/domain/repositories/voucher_repository.dart';
 import 'package:ssa/core/logging/app_logger.dart';
 import 'package:ssa/core/logging/console_logger.dart';
 import 'package:ssa/core/network/connectivity_service.dart';
+import 'package:ssa/core/permissions/bluetooth_permission_service.dart';
 import 'package:ssa/core/printer/printer_service.dart';
+import 'package:ssa/core/settings/locale_settings_service.dart';
+import 'package:ssa/core/settings/receipt_settings_service.dart';
 
 final appConfigProvider = Provider<AppConfig>((ref) {
   return AppConfig.fromEnvironment(AppFlavor.prod);
@@ -30,6 +35,12 @@ final appDatabaseProvider = Provider<AppDatabase>((ref) {
 
 final connectivityServiceProvider = Provider<ConnectivityService>((ref) {
   return ConnectivityService();
+});
+
+final bluetoothPermissionClientProvider = Provider<BluetoothPermissionClient>((
+  ref,
+) {
+  return DefaultBluetoothPermissionClient();
 });
 
 final printerServiceProvider = Provider<PrinterService>((ref) {
@@ -60,9 +71,53 @@ final localImageStorageServiceProvider = Provider<LocalImageStorageService>((
   return LocalImageStorageService();
 });
 
+final receiptSettingsServiceProvider = Provider<ReceiptSettingsService>((ref) {
+  return const ReceiptSettingsService();
+});
+
+final localeSettingsServiceProvider = Provider<LocaleSettingsService>((ref) {
+  return const LocaleSettingsService();
+});
+
+final localeControllerProvider =
+    StateNotifierProvider<LocaleController, Locale>((ref) {
+      final controller = LocaleController(
+        ref.watch(localeSettingsServiceProvider),
+      );
+      controller.loadSavedLocale();
+      return controller;
+    });
+
+final localBackupServiceProvider = Provider<LocalBackupService>((ref) {
+  return const LocalBackupService();
+});
+
 final voucherImageLocalDataSourceProvider = Provider<VoucherImageLocalDataSource>(
   (ref) {
     final storageService = ref.watch(localImageStorageServiceProvider);
     return VoucherImageLocalDataSource(storageService: storageService);
   },
 );
+
+class LocaleController extends StateNotifier<Locale> {
+  LocaleController(this._service)
+    : super(const Locale(LocaleSettingsService.defaultLanguageCode));
+
+  final LocaleSettingsService _service;
+
+  Future<void> loadSavedLocale() async {
+    final languageCode = await _service.loadLanguageCode();
+    if (state.languageCode == languageCode) {
+      return;
+    }
+    state = Locale(languageCode);
+  }
+
+  Future<bool> setLanguageCode(String languageCode) async {
+    final saved = await _service.saveLanguageCode(languageCode);
+    if (saved) {
+      state = Locale(languageCode);
+    }
+    return saved;
+  }
+}

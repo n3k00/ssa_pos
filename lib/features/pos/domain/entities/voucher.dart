@@ -1,4 +1,6 @@
 class Voucher {
+  static const Object _unset = Object();
+
   const Voucher({
     required this.id,
     required this.createdAt,
@@ -13,6 +15,7 @@ class Voucher {
     this.note,
     this.itemImagePath,
     this.dispatchReceiptImagePath,
+    this.dispatchReceiptSavedAt,
   });
 
   final String id;
@@ -28,6 +31,7 @@ class Voucher {
   final String? note;
   final String? itemImagePath;
   final String? dispatchReceiptImagePath;
+  final String? dispatchReceiptSavedAt;
 
   Voucher copyWith({
     String? id,
@@ -38,11 +42,12 @@ class Voucher {
     String? name,
     String? phone,
     String? address,
-    String? facebookAccount,
+    Object? facebookAccount = _unset,
     String? parcelNumber,
-    String? note,
-    String? itemImagePath,
-    String? dispatchReceiptImagePath,
+    Object? note = _unset,
+    Object? itemImagePath = _unset,
+    Object? dispatchReceiptImagePath = _unset,
+    Object? dispatchReceiptSavedAt = _unset,
   }) {
     return Voucher(
       id: id ?? this.id,
@@ -53,12 +58,20 @@ class Voucher {
       name: name ?? this.name,
       phone: phone ?? this.phone,
       address: address ?? this.address,
-      facebookAccount: facebookAccount ?? this.facebookAccount,
+      facebookAccount: identical(facebookAccount, _unset)
+          ? this.facebookAccount
+          : facebookAccount as String?,
       parcelNumber: parcelNumber ?? this.parcelNumber,
-      note: note ?? this.note,
-      itemImagePath: itemImagePath ?? this.itemImagePath,
-      dispatchReceiptImagePath:
-          dispatchReceiptImagePath ?? this.dispatchReceiptImagePath,
+      note: identical(note, _unset) ? this.note : note as String?,
+      itemImagePath: identical(itemImagePath, _unset)
+          ? this.itemImagePath
+          : itemImagePath as String?,
+      dispatchReceiptImagePath: identical(dispatchReceiptImagePath, _unset)
+          ? this.dispatchReceiptImagePath
+          : dispatchReceiptImagePath as String?,
+      dispatchReceiptSavedAt: identical(dispatchReceiptSavedAt, _unset)
+          ? this.dispatchReceiptSavedAt
+          : dispatchReceiptSavedAt as String?,
     );
   }
 
@@ -77,6 +90,7 @@ class Voucher {
       'note': note,
       'item_image_path': itemImagePath,
       'dispatch_receipt_image_path': dispatchReceiptImagePath,
+      'dispatch_receipt_saved_at': dispatchReceiptSavedAt,
     };
   }
 
@@ -95,6 +109,7 @@ class Voucher {
       note: map['note'] as String?,
       itemImagePath: map['item_image_path'] as String?,
       dispatchReceiptImagePath: map['dispatch_receipt_image_path'] as String?,
+      dispatchReceiptSavedAt: map['dispatch_receipt_saved_at'] as String?,
     );
   }
 }

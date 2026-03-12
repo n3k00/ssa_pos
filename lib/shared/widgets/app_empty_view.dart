@@ -4,11 +4,11 @@ import 'package:ssa/app/design_system.dart';
 class AppEmptyView extends StatelessWidget {
   const AppEmptyView({
     super.key,
-    this.message = AppStrings.noData,
+    this.message,
     this.icon = Icons.inbox_outlined,
   });
 
-  final String message;
+  final String? message;
   final IconData icon;
 
   @override
@@ -22,7 +22,7 @@ class AppEmptyView extends StatelessWidget {
             Icon(icon, color: AppColors.textHint, size: 40),
             const SizedBox(height: AppDimens.spacing12),
             Text(
-              message,
+              message ?? AppStrings.noData,
               style: AppTextStyles.bodyMedium.copyWith(
                 color: AppColors.textSecondary,
               ),

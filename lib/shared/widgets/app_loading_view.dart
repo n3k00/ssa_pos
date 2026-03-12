@@ -4,10 +4,10 @@ import 'package:ssa/app/design_system.dart';
 class AppLoadingView extends StatelessWidget {
   const AppLoadingView({
     super.key,
-    this.message = AppStrings.loading,
+    this.message,
   });
 
-  final String message;
+  final String? message;
 
   @override
   Widget build(BuildContext context) {
@@ -20,7 +20,7 @@ class AppLoadingView extends StatelessWidget {
             const CircularProgressIndicator(),
             const SizedBox(height: AppDimens.spacing12),
             Text(
-              message,
+              message ?? AppStrings.loading,
               style: AppTextStyles.bodyMedium,
               textAlign: TextAlign.center,
             ),

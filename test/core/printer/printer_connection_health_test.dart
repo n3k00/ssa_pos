@@ -19,29 +19,29 @@ class _FakePrinterCore extends PrinterCore {
 }
 
 void main() {
-  TestWidgetsFlutterBinding.ensureInitialized();
-
   tearDown(() {
     PrinterConnectionHealth.debugConnectionStatusReader = null;
   });
 
   test('refresh disconnects stale app state when plugin reports disconnected', () async {
+    final core = _FakePrinterCore(connected: true);
     PrinterConnectionHealth.debugConnectionStatusReader = () async => false;
 
-    final core = _FakePrinterCore(connected: true);
     final result = await PrinterConnectionHealth.refresh(core);
 
-    expect(result, false);
+    expect(result, isFalse);
     expect(core.disconnectCalls, 1);
+    expect(core.connected, isFalse);
   });
 
   test('refresh keeps state when plugin reports connected', () async {
+    final core = _FakePrinterCore(connected: true);
     PrinterConnectionHealth.debugConnectionStatusReader = () async => true;
 
-    final core = _FakePrinterCore(connected: true);
     final result = await PrinterConnectionHealth.refresh(core);
 
-    expect(result, true);
+    expect(result, isTrue);
     expect(core.disconnectCalls, 0);
+    expect(core.connected, isTrue);
   });
 }

@@ -81,6 +81,7 @@ class VoucherLocalDataSource {
       note: Value(voucher.note),
       itemImagePath: Value(voucher.itemImagePath),
       dispatchReceiptImagePath: Value(voucher.dispatchReceiptImagePath),
+      dispatchReceiptSavedAt: Value(voucher.dispatchReceiptSavedAt),
     );
   }
 
@@ -99,6 +100,7 @@ class VoucherLocalDataSource {
       note: row.note,
       itemImagePath: row.itemImagePath,
       dispatchReceiptImagePath: row.dispatchReceiptImagePath,
+      dispatchReceiptSavedAt: row.dispatchReceiptSavedAt,
     );
   }
 }

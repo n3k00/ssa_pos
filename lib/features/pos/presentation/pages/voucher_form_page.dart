@@ -15,7 +15,7 @@ class VoucherFormPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text(AppStrings.voucherFormTitle)),
+      appBar: AppBar(title: Text(AppStrings.voucherFormTitle)),
       body: const SafeArea(
         child: SingleChildScrollView(
           padding: EdgeInsets.all(AppDimens.pagePadding),
@@ -115,7 +115,7 @@ class VoucherFormSectionState extends ConsumerState<VoucherFormSection> {
             children: [
               ListTile(
                 leading: const Icon(Icons.camera_alt_outlined),
-                title: const Text(AppStrings.camera),
+                title: Text(AppStrings.camera),
                 onTap: () async {
                   Navigator.of(sheetContext).pop();
                   await _pickItemImage(VoucherImageSource.camera);
@@ -123,7 +123,7 @@ class VoucherFormSectionState extends ConsumerState<VoucherFormSection> {
               ),
               ListTile(
                 leading: const Icon(Icons.photo_library_outlined),
-                title: const Text(AppStrings.gallery),
+                title: Text(AppStrings.gallery),
                 onTap: () async {
                   Navigator.of(sheetContext).pop();
                   await _pickItemImage(VoucherImageSource.gallery);
@@ -159,7 +159,7 @@ class VoucherFormSectionState extends ConsumerState<VoucherFormSection> {
     if (!isValid) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text(AppStrings.fillRequiredFields)),
+          SnackBar(content: Text(AppStrings.fillRequiredFields)),
         );
       }
       return;
@@ -170,7 +170,7 @@ class VoucherFormSectionState extends ConsumerState<VoucherFormSection> {
     if (!isConnected) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text(AppStrings.printerRequiredForPreview)),
+          SnackBar(content: Text(AppStrings.printerRequiredForPreview)),
         );
       }
       return;
@@ -195,6 +195,7 @@ class VoucherFormSectionState extends ConsumerState<VoucherFormSection> {
           : _noteController.text.trim(),
       itemImagePath: _itemImagePath,
       dispatchReceiptImagePath: null,
+      dispatchReceiptSavedAt: null,
     );
 
     if (!mounted) {
@@ -225,20 +226,20 @@ class VoucherFormSectionState extends ConsumerState<VoucherFormSection> {
         children: [
           TextFormField(
             controller: _nameController,
-            decoration: const InputDecoration(labelText: AppStrings.nameLabel),
+            decoration: InputDecoration(labelText: AppStrings.nameLabel),
             validator: _requiredValidator,
           ),
           const SizedBox(height: AppDimens.spacing12),
           TextFormField(
             controller: _phoneController,
             keyboardType: TextInputType.phone,
-            decoration: const InputDecoration(labelText: AppStrings.phoneLabel),
+            decoration: InputDecoration(labelText: AppStrings.phoneLabel),
             validator: _requiredValidator,
           ),
           const SizedBox(height: AppDimens.spacing12),
           TextFormField(
             controller: _addressController,
-            decoration: const InputDecoration(
+            decoration: InputDecoration(
               labelText: AppStrings.addressLabel,
             ),
             validator: _requiredValidator,
@@ -246,7 +247,7 @@ class VoucherFormSectionState extends ConsumerState<VoucherFormSection> {
           const SizedBox(height: AppDimens.spacing12),
           TextFormField(
             controller: _facebookController,
-            decoration: const InputDecoration(
+            decoration: InputDecoration(
               labelText: AppStrings.facebookLabel,
             ),
             validator: _requiredValidator,
@@ -254,7 +255,7 @@ class VoucherFormSectionState extends ConsumerState<VoucherFormSection> {
           const SizedBox(height: AppDimens.spacing12),
           TextFormField(
             controller: _parcelController,
-            decoration: const InputDecoration(
+            decoration: InputDecoration(
               labelText: AppStrings.parcelNumberLabel,
             ),
             validator: _requiredValidator,
@@ -262,10 +263,10 @@ class VoucherFormSectionState extends ConsumerState<VoucherFormSection> {
           const SizedBox(height: AppDimens.spacing12),
           DropdownButtonFormField<String>(
             initialValue: _paymentStatus,
-            decoration: const InputDecoration(
+            decoration: InputDecoration(
               labelText: AppStrings.paymentStatusLabel,
             ),
-            items: const [
+            items: [
               DropdownMenuItem(
                 value: 'payment_due',
                 child: Text(AppStrings.paymentStatusDue),
@@ -287,7 +288,7 @@ class VoucherFormSectionState extends ConsumerState<VoucherFormSection> {
           const SizedBox(height: AppDimens.spacing12),
           TextFormField(
             controller: _noteController,
-            decoration: const InputDecoration(labelText: AppStrings.noteLabel),
+            decoration: InputDecoration(labelText: AppStrings.noteLabel),
             maxLines: 3,
           ),
           const SizedBox(height: AppDimens.spacing12),
@@ -305,15 +306,15 @@ class VoucherFormSectionState extends ConsumerState<VoucherFormSection> {
                 border: Border.all(color: AppColors.border),
               ),
               child: _itemImagePath == null
-                  ? const Center(
+                  ? Center(
                       child: Column(
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          Icon(
+                          const Icon(
                             Icons.add_a_photo_outlined,
                             size: AppDimens.icon28,
                           ),
-                          SizedBox(height: AppDimens.spacing8),
+                          const SizedBox(height: AppDimens.spacing8),
                           Text(
                             AppStrings.pickImage,
                             style: AppTextStyles.bodyMedium,
@@ -358,7 +359,7 @@ class VoucherFormSectionState extends ConsumerState<VoucherFormSection> {
             const SizedBox(height: AppDimens.spacing8),
             ElevatedButton(
               onPressed: submitPreview,
-              child: const Text(AppStrings.printPreview),
+              child: Text(AppStrings.printPreview),
             ),
           ],
         ],

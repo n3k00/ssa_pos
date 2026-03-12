@@ -1,9 +1,13 @@
 import 'dart:io';
 
+import 'package:image/image.dart' as img;
 import 'package:path/path.dart' as p;
 import 'package:path_provider/path_provider.dart';
 
 class LocalImageStorageService {
+  static const int _maxImageWidth = 1280;
+  static const int _jpegQuality = 78;
+
   Future<String> saveFromSourcePath({
     required String sourcePath,
     required String folderName,
@@ -21,11 +25,12 @@ class LocalImageStorageService {
       await imagesDir.create(recursive: true);
     }
 
-    final extension = p.extension(sourcePath).toLowerCase();
-    final safeExtension = extension.isEmpty ? '.jpg' : extension;
-    final fileName =
-        '${fileNamePrefix}_${DateTime.now().millisecondsSinceEpoch}$safeExtension';
-    final savedFile = await sourceFile.copy(p.join(imagesDir.path, fileName));
+    final fileName = '${fileNamePrefix}_${DateTime.now().millisecondsSinceEpoch}.jpg';
+    final savedPath = p.join(imagesDir.path, fileName);
+    final savedFile = await _saveOptimizedJpeg(
+      sourceFile: sourceFile,
+      destinationPath: savedPath,
+    );
 
     if (deleteSourceAfterCopy) {
       try {
@@ -36,6 +41,28 @@ class LocalImageStorageService {
     }
 
     return savedFile.path;
+  }
+
+  Future<File> _saveOptimizedJpeg({
+    required File sourceFile,
+    required String destinationPath,
+  }) async {
+    try {
+      final bytes = await sourceFile.readAsBytes();
+      final decoded = img.decodeImage(bytes);
+      if (decoded == null) {
+        return sourceFile.copy(destinationPath);
+      }
+
+      final normalized = decoded.width > _maxImageWidth
+          ? img.copyResize(decoded, width: _maxImageWidth)
+          : decoded;
+      final jpgBytes = img.encodeJpg(normalized, quality: _jpegQuality);
+      final output = File(destinationPath);
+      return output.writeAsBytes(jpgBytes, flush: true);
+    } catch (_) {
+      return sourceFile.copy(destinationPath);
+    }
   }
 
   Future<void> deleteIfExists(String? path) async {

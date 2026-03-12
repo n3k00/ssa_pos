@@ -9,7 +9,10 @@ import 'package:image/image.dart' as img;
 import 'package:pos_printer_kit/pos_printer_kit.dart';
 import 'package:ssa/app/design_system.dart';
 import 'package:ssa/core/printer/printer_connection_health.dart';
+import 'package:ssa/core/settings/receipt_settings_service.dart';
+import 'package:ssa/features/pos/data/datasources/voucher_image_local_datasource.dart';
 import 'package:ssa/features/pos/domain/entities/voucher.dart';
+import 'package:ssa/features/pos/presentation/models/dispatch_receipt_image_state.dart';
 import 'package:ssa/shared/providers/app_providers.dart';
 
 class VoucherPrintPreviewPage extends ConsumerStatefulWidget {
@@ -36,6 +39,262 @@ class _VoucherPrintPreviewPageState
   static const double _receiptPreviewWidth = 288;
   final GlobalKey _receiptBoundaryKey = GlobalKey();
   bool _saving = false;
+  bool _dispatchSaving = false;
+  late DispatchReceiptImageState _dispatchImageState;
+  bool _dispatchDirty = false;
+  late Voucher _voucher;
+  String _receiptTitle = AppStrings.receiptShopTitle;
+  String _receiptPhones = AppStrings.receiptPhones;
+  double _receiptTitleFontSize = 22;
+  double _receiptPhonesFontSize = 16;
+  double _receiptRowFontSize = 14;
+  double _receiptPaddingTop = 10;
+  double _receiptPaddingHorizontal = 12;
+  double _receiptPaddingBottom = 40;
+  PrintDensityPreset _printDensityPreset = PrintDensityPreset.balanced;
+  int _feedLinesAfterPrint = 0;
+
+  @override
+  void initState() {
+    super.initState();
+    _voucher = widget.voucher;
+    _dispatchImageState = DispatchReceiptImageState.initial(
+      _voucher.dispatchReceiptImagePath,
+    );
+    _loadReceiptSettings();
+    if (!widget.saveBeforePrint) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        _reloadLatestVoucher();
+      });
+    }
+  }
+
+  Future<void> _loadReceiptSettings() async {
+    final service = ref.read(receiptSettingsServiceProvider);
+    final settings = await service.load(
+      defaultTitle: AppStrings.receiptShopTitle,
+      defaultPhones: AppStrings.receiptPhones,
+      defaultTitleFontSize: 22,
+      defaultPhonesFontSize: 16,
+      defaultRowFontSize: 14,
+      defaultPaddingTop: 10,
+      defaultPaddingHorizontal: 12,
+      defaultPaddingBottom: 40,
+      defaultPrintDensityPreset: PrintDensityPreset.balanced,
+      defaultFeedLinesAfterPrint: 0,
+    );
+    if (!mounted) {
+      return;
+    }
+    setState(() {
+      _receiptTitle = settings.title;
+      _receiptPhones = settings.phones;
+      _receiptTitleFontSize = settings.titleFontSize;
+      _receiptPhonesFontSize = settings.phonesFontSize;
+      _receiptRowFontSize = settings.rowFontSize;
+      _receiptPaddingTop = settings.paddingTop;
+      _receiptPaddingHorizontal = settings.paddingHorizontal;
+      _receiptPaddingBottom = settings.paddingBottom;
+      _printDensityPreset = settings.printDensityPreset;
+      _feedLinesAfterPrint = settings.feedLinesAfterPrint;
+    });
+  }
+
+  int _thresholdForPreset(PrintDensityPreset preset) {
+    switch (preset) {
+      case PrintDensityPreset.light:
+        return 196;
+      case PrintDensityPreset.balanced:
+        return 180;
+      case PrintDensityPreset.dark:
+        return 164;
+    }
+  }
+
+  Future<void> _reloadLatestVoucher() async {
+    final latest = await ref.read(voucherRepositoryProvider).getById(_voucher.id);
+    if (!mounted || latest == null) {
+      return;
+    }
+    setState(() {
+      _voucher = latest;
+      _dispatchImageState = _dispatchImageState.syncedFromPersistence(
+        latest.dispatchReceiptImagePath,
+      );
+      _dispatchDirty = false;
+    });
+  }
+
+  Future<void> _showFullImage(String imagePath) async {
+    await showDialog<void>(
+      context: context,
+      builder: (dialogContext) {
+        return Dialog(
+          insetPadding: const EdgeInsets.all(AppDimens.pagePadding),
+          child: Stack(
+            children: [
+              InteractiveViewer(
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(AppDimens.radius12),
+                  child: Image.file(File(imagePath), fit: BoxFit.contain),
+                ),
+              ),
+              Positioned(
+                top: AppDimens.spacing8,
+                right: AppDimens.spacing8,
+                child: IconButton(
+                  onPressed: () => Navigator.of(dialogContext).pop(),
+                  icon: const Icon(Icons.close),
+                ),
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  Future<void> _pickDispatchReceiptImage(VoucherImageSource source) async {
+    final dataSource = ref.read(voucherImageLocalDataSourceProvider);
+    final pickedPath = await dataSource.pickAndSave(
+      source: source,
+      type: VoucherImageType.dispatchReceipt,
+    );
+    if (pickedPath == null || !mounted) {
+      return;
+    }
+    final update = _dispatchImageState.replaceWithPickedPath(pickedPath);
+    if (update.immediateDeletePath != null) {
+      await dataSource.deleteSavedImage(update.immediateDeletePath);
+    }
+    setState(() {
+      _dispatchImageState = update.state;
+      _dispatchDirty = true;
+    });
+  }
+
+  Future<void> _showDispatchSourceSheet() async {
+    await showModalBottomSheet<void>(
+      context: context,
+      builder: (sheetContext) {
+        return SafeArea(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              ListTile(
+                leading: const Icon(Icons.camera_alt_outlined),
+                title: Text(AppStrings.camera),
+                onTap: () async {
+                  Navigator.of(sheetContext).pop();
+                  await _pickDispatchReceiptImage(VoucherImageSource.camera);
+                },
+              ),
+              ListTile(
+                leading: const Icon(Icons.photo_library_outlined),
+                title: Text(AppStrings.gallery),
+                onTap: () async {
+                  Navigator.of(sheetContext).pop();
+                  await _pickDispatchReceiptImage(VoucherImageSource.gallery);
+                },
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  Future<void> _removeDispatchReceiptImage() async {
+    if (_dispatchImageState.displayedPath == null) {
+      return;
+    }
+    final update = _dispatchImageState.removeCurrent();
+    if (update.immediateDeletePath != null) {
+      await ref
+          .read(voucherImageLocalDataSourceProvider)
+          .deleteSavedImage(update.immediateDeletePath);
+    }
+    if (!mounted) {
+      return;
+    }
+    setState(() {
+      _dispatchImageState = update.state;
+      _dispatchDirty = true;
+    });
+  }
+
+  Future<void> _saveDispatchReceiptImage() async {
+    if (_dispatchSaving) {
+      return;
+    }
+    setState(() {
+      _dispatchSaving = true;
+    });
+    try {
+      final repository = ref.read(voucherRepositoryProvider);
+      final imageDataSource = ref.read(voucherImageLocalDataSourceProvider);
+      final logger = ref.read(appLoggerProvider);
+      final updated = Voucher(
+        id: _voucher.id,
+        createdAt: _voucher.createdAt,
+        updatedAt: DateTime.now(),
+        dateAndTime: _voucher.dateAndTime,
+        paymentStatus: _voucher.paymentStatus,
+        name: _voucher.name,
+        phone: _voucher.phone,
+        address: _voucher.address,
+        facebookAccount: _voucher.facebookAccount,
+        parcelNumber: _voucher.parcelNumber,
+        note: _voucher.note,
+        itemImagePath: _voucher.itemImagePath,
+        dispatchReceiptImagePath: _dispatchImageState.displayedPath,
+        dispatchReceiptSavedAt: _dispatchImageState.displayedPath == null
+            ? null
+            : DateTime.now().toIso8601String(),
+      );
+      await repository.update(updated);
+      final pendingDeletePath = _dispatchImageState.pendingDeletionPath;
+      if (!mounted) {
+        return;
+      }
+      setState(() {
+        _voucher = updated;
+        _dispatchImageState = _dispatchImageState.markSaved();
+        _dispatchDirty = false;
+      });
+      if (pendingDeletePath != null &&
+          pendingDeletePath != updated.dispatchReceiptImagePath) {
+        try {
+          await imageDataSource.deleteSavedImage(pendingDeletePath);
+        } catch (error, stackTrace) {
+          logger.error(
+            'Failed to clean up old dispatch receipt image after save.',
+            error: error,
+            stackTrace: stackTrace,
+          );
+        }
+      }
+      if (!mounted) {
+        return;
+      }
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(AppStrings.dispatchReceiptSaved)));
+    } catch (_) {
+      if (!mounted) {
+        return;
+      }
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(AppStrings.dispatchReceiptSaveFailed)),
+      );
+    } finally {
+      if (mounted) {
+        setState(() {
+          _dispatchSaving = false;
+        });
+      }
+    }
+  }
 
   String _paymentStatusText(String code) {
     return code == 'payment_paid'
@@ -59,6 +318,119 @@ class _VoucherPrintPreviewPageState
     return '$day-$month-$year $hour12:$minute $amPm';
   }
 
+  String? _dispatchReceiptAddedLabel(String? iso) {
+    if (iso == null || iso.isEmpty) {
+      return null;
+    }
+    return '${AppStrings.dispatchReceiptAddedOnPrefix}${_formatDateTime(iso)}';
+  }
+
+  String? _persistedDispatchReceiptAddedLabel() {
+    if (_dispatchDirty) {
+      return null;
+    }
+    if (_dispatchImageState.displayedPath == null) {
+      return null;
+    }
+    if (_dispatchImageState.displayedPath != _voucher.dispatchReceiptImagePath) {
+      return null;
+    }
+    return _dispatchReceiptAddedLabel(_voucher.dispatchReceiptSavedAt);
+  }
+
+  Widget _buildAttachmentsSection(Voucher voucher) {
+    final hasItemImage =
+        voucher.itemImagePath != null && voucher.itemImagePath!.isNotEmpty;
+    final showSection = hasItemImage || !widget.saveBeforePrint;
+    if (!showSection) {
+      return const SizedBox.shrink();
+    }
+
+    return Align(
+      alignment: Alignment.topCenter,
+      child: Container(
+        width: _receiptPreviewWidth,
+        padding: const EdgeInsets.all(AppDimens.spacing12),
+        decoration: BoxDecoration(
+          color: AppColors.surface,
+          borderRadius: BorderRadius.circular(AppDimens.radius16),
+          border: Border.all(color: AppColors.border),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              AppStrings.attachmentsLabel,
+              style: AppTextStyles.labelLarge.copyWith(
+                color: AppColors.textSecondary,
+              ),
+            ),
+            const SizedBox(height: AppDimens.spacing12),
+            if (hasItemImage)
+              _AttachmentCard(
+                title: AppStrings.itemImageLabel,
+                subtitle: AppStrings.tapImageToView,
+                imagePath: voucher.itemImagePath!,
+                width: _receiptPreviewWidth - (AppDimens.spacing12 * 2),
+                height: 216,
+                onTap: () => _showFullImage(voucher.itemImagePath!),
+              ),
+            if (hasItemImage && !widget.saveBeforePrint)
+              const SizedBox(height: AppDimens.spacing12),
+            if (!widget.saveBeforePrint) _buildDispatchAttachmentCard(),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildDispatchAttachmentCard() {
+    final displayedPath = _dispatchImageState.displayedPath;
+    final imageWidth = _receiptPreviewWidth - (AppDimens.spacing12 * 2);
+    final subtitle = _dispatchDirty
+        ? AppStrings.changesNotSaved
+        : _persistedDispatchReceiptAddedLabel() ?? AppStrings.tapImageToView;
+
+    return _AttachmentCard(
+      title: AppStrings.dispatchReceiptImageLabel,
+      subtitle: subtitle,
+      imagePath: displayedPath,
+      width: imageWidth,
+      height: 216,
+      onTap: displayedPath == null ? null : () => _showFullImage(displayedPath),
+      primaryAction: displayedPath == null
+          ? _AttachmentAction(
+              icon: Icons.add_a_photo_outlined,
+              onTap: _showDispatchSourceSheet,
+            )
+          : _AttachmentAction(
+              icon: Icons.edit_outlined,
+              onTap: _showDispatchSourceSheet,
+            ),
+      secondaryAction: displayedPath == null
+          ? null
+          : _AttachmentAction(
+              icon: Icons.delete_outline,
+              onTap: _removeDispatchReceiptImage,
+            ),
+      footer: _dispatchDirty
+          ? SizedBox(
+              width: double.infinity,
+              child: ElevatedButton.icon(
+                onPressed: _dispatchSaving ? null : _saveDispatchReceiptImage,
+                icon: const Icon(Icons.save_outlined),
+                label: Text(
+                  _dispatchSaving
+                      ? AppStrings.loading
+                      : AppStrings.saveDispatchReceiptImage,
+                ),
+              ),
+            )
+          : null,
+      emptyStateLabel: AppStrings.addDispatchReceiptImage,
+    );
+  }
+
   Future<void> _confirmAndSave() async {
     if (_saving) {
       return;
@@ -76,7 +448,7 @@ class _VoucherPrintPreviewPageState
           return;
         }
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text(AppStrings.printerNotConnected)),
+          SnackBar(content: Text(AppStrings.printerNotConnected)),
         );
         return;
       }
@@ -91,13 +463,13 @@ class _VoucherPrintPreviewPageState
 
       final printed = await printerCore.printImage(
         processedBytes,
-        config: const PrinterPrintConfig(
+        config: PrinterPrintConfig(
           width: 576,
           ditherMode: PrinterDitherMode.threshold,
-          threshold: 180,
+          threshold: _thresholdForPreset(_printDensityPreset),
           chunkDelayMs: 6,
           maxChunkSize: 220,
-          feedLinesAfterPrint: 0,
+          feedLinesAfterPrint: _feedLinesAfterPrint,
           preferWriteWithoutResponse: false,
         ),
       );
@@ -112,19 +484,23 @@ class _VoucherPrintPreviewPageState
         return;
       }
       if (!printed) {
+        await printerCore.disconnect();
+        if (!mounted) {
+          return;
+        }
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text(AppStrings.voucherPrintFailedNotSaved)),
+          SnackBar(content: Text(AppStrings.voucherPrintFailedNotSaved)),
         );
         return;
       }
 
       final repository = ref.read(voucherRepositoryProvider);
-      await repository.create(widget.voucher);
+      await repository.create(_voucher);
       if (!mounted) {
         return;
       }
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text(AppStrings.voucherSavedAndPrinted)),
+        SnackBar(content: Text(AppStrings.voucherSavedAndPrinted)),
       );
       if (widget.popOnSave) {
         setState(() {
@@ -144,7 +520,7 @@ class _VoucherPrintPreviewPageState
       }
       ScaffoldMessenger.of(
         context,
-      ).showSnackBar(const SnackBar(content: Text(AppStrings.errorGeneric)));
+      ).showSnackBar(SnackBar(content: Text(AppStrings.errorGeneric)));
     } finally {
       if (mounted && _saving) {
         setState(() {
@@ -281,7 +657,7 @@ class _VoucherPrintPreviewPageState
 
   @override
   Widget build(BuildContext context) {
-    final voucher = widget.voucher;
+    final voucher = _voucher;
 
     return PopScope(
       canPop: !_saving,
@@ -289,7 +665,7 @@ class _VoucherPrintPreviewPageState
         children: [
           Scaffold(
             appBar: AppBar(
-              title: const Text(AppStrings.previewTitle),
+              title: Text(AppStrings.previewTitle),
               automaticallyImplyLeading: !_saving,
             ),
             body: ListView(
@@ -309,13 +685,12 @@ class _VoucherPrintPreviewPageState
                       child: ColoredBox(
                         color: AppColors.white,
                         child: Container(
-                          padding:
-                              const EdgeInsets.symmetric(
-                                horizontal: AppDimens.spacing12,
-                              ).copyWith(
-                                top: AppDimens.spacing10,
-                                bottom: AppDimens.spacing40,
-                              ),
+                          padding: EdgeInsets.only(
+                            top: _receiptPaddingTop,
+                            left: _receiptPaddingHorizontal,
+                            right: _receiptPaddingHorizontal,
+                            bottom: _receiptPaddingBottom,
+                          ),
                           decoration: BoxDecoration(
                             color: AppColors.white,
                             border: Border.all(color: AppColors.border),
@@ -323,18 +698,22 @@ class _VoucherPrintPreviewPageState
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              const Center(
+                              Center(
                                 child: Text(
-                                  AppStrings.receiptShopTitle,
-                                  style: AppTextStyles.headlineMedium,
+                                  _receiptTitle,
+                                  style: AppTextStyles.headlineMedium.copyWith(
+                                    fontSize: _receiptTitleFontSize,
+                                  ),
                                   textAlign: TextAlign.center,
                                 ),
                               ),
                               const SizedBox(height: AppDimens.spacing4),
-                              const Center(
+                              Center(
                                 child: Text(
-                                  AppStrings.receiptPhones,
-                                  style: AppTextStyles.titleMedium,
+                                  _receiptPhones,
+                                  style: AppTextStyles.titleMedium.copyWith(
+                                    fontSize: _receiptPhonesFontSize,
+                                  ),
                                   textAlign: TextAlign.center,
                                 ),
                               ),
@@ -346,36 +725,44 @@ class _VoucherPrintPreviewPageState
                               _ReceiptRow(
                                 label: AppStrings.receiptDateTimeLabel,
                                 value: _formatDateTime(voucher.dateAndTime),
+                                fontSize: _receiptRowFontSize,
                               ),
                               _ReceiptRow(
                                 label: AppStrings.nameLabel,
                                 value: voucher.name,
+                                fontSize: _receiptRowFontSize,
                               ),
                               _ReceiptRow(
                                 label: AppStrings.phoneLabel,
                                 value: voucher.phone,
+                                fontSize: _receiptRowFontSize,
                               ),
                               _ReceiptRow(
                                 label: AppStrings.addressLabel,
                                 value: voucher.address,
+                                fontSize: _receiptRowFontSize,
                               ),
                               _ReceiptRow(
                                 label: AppStrings.facebookLabel,
                                 value: voucher.facebookAccount ?? '-',
+                                fontSize: _receiptRowFontSize,
                               ),
                               _ReceiptRow(
                                 label: AppStrings.parcelNumberLabel,
                                 value: voucher.parcelNumber,
+                                fontSize: _receiptRowFontSize,
                               ),
                               _ReceiptRow(
                                 label: AppStrings.paymentStatusLabel,
                                 value: _paymentStatusText(
                                   voucher.paymentStatus,
                                 ),
+                                fontSize: _receiptRowFontSize,
                               ),
                               _ReceiptRow(
                                 label: AppStrings.noteLabel,
                                 value: voucher.note ?? '-',
+                                fontSize: _receiptRowFontSize,
                               ),
                             ],
                           ),
@@ -384,19 +771,8 @@ class _VoucherPrintPreviewPageState
                     ),
                   ),
                 ),
-                if (voucher.itemImagePath != null &&
-                    voucher.itemImagePath!.isNotEmpty) ...[
-                  const SizedBox(height: AppDimens.spacing16),
-                  ClipRRect(
-                    borderRadius: BorderRadius.circular(AppDimens.radius12),
-                    child: Image.file(
-                      File(voucher.itemImagePath!),
-                      height: 320,
-                      width: double.infinity,
-                      fit: BoxFit.cover,
-                    ),
-                  ),
-                ],
+                const SizedBox(height: AppDimens.spacing16),
+                _buildAttachmentsSection(voucher),
               ],
             ),
             bottomNavigationBar: SafeArea(
@@ -437,11 +813,214 @@ class _VoucherPrintPreviewPageState
   }
 }
 
+class _OverlayActionIcon extends StatelessWidget {
+  const _OverlayActionIcon({required this.icon, required this.onTap});
+
+  final IconData icon;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: AppColors.black.withAlpha(115),
+      borderRadius: BorderRadius.circular(AppDimens.radius8),
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(AppDimens.radius8),
+        child: Padding(
+          padding: const EdgeInsets.all(AppDimens.spacing8),
+          child: Icon(icon, color: AppColors.white, size: AppDimens.icon20),
+        ),
+      ),
+    );
+  }
+}
+
+class _AttachmentAction {
+  const _AttachmentAction({required this.icon, required this.onTap});
+
+  final IconData icon;
+  final VoidCallback onTap;
+}
+
+class _AttachmentCard extends StatelessWidget {
+  const _AttachmentCard({
+    required this.title,
+    required this.subtitle,
+    required this.imagePath,
+    required this.width,
+    required this.height,
+    required this.onTap,
+    this.primaryAction,
+    this.secondaryAction,
+    this.footer,
+    this.emptyStateLabel,
+  });
+
+  final String title;
+  final String subtitle;
+  final String? imagePath;
+  final double width;
+  final double height;
+  final VoidCallback? onTap;
+  final _AttachmentAction? primaryAction;
+  final _AttachmentAction? secondaryAction;
+  final Widget? footer;
+  final String? emptyStateLabel;
+
+  @override
+  Widget build(BuildContext context) {
+    final hasImage = imagePath != null && imagePath!.isNotEmpty;
+
+    return Container(
+      padding: const EdgeInsets.all(AppDimens.spacing10),
+      decoration: BoxDecoration(
+        color: AppColors.background,
+        borderRadius: BorderRadius.circular(AppDimens.radius12),
+        border: Border.all(color: AppColors.divider),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(title, style: AppTextStyles.labelLarge),
+                    const SizedBox(height: AppDimens.spacing2),
+                    Text(subtitle, style: AppTextStyles.bodySmall),
+                  ],
+                ),
+              ),
+              if (primaryAction != null) ...[
+                _OverlayActionIcon(
+                  icon: primaryAction!.icon,
+                  onTap: primaryAction!.onTap,
+                ),
+              ],
+              if (secondaryAction != null) ...[
+                const SizedBox(width: AppDimens.spacing8),
+                _OverlayActionIcon(
+                  icon: secondaryAction!.icon,
+                  onTap: secondaryAction!.onTap,
+                ),
+              ],
+            ],
+          ),
+          const SizedBox(height: AppDimens.spacing10),
+          if (hasImage)
+            _PreviewImageCard(
+              imagePath: imagePath!,
+              width: width,
+              height: height,
+              onTap: onTap!,
+            )
+          else
+            _AttachmentPlaceholder(
+              width: width,
+              height: height,
+              label: emptyStateLabel ?? title,
+              onTap: primaryAction?.onTap,
+            ),
+          if (footer != null) ...[
+            const SizedBox(height: AppDimens.spacing10),
+            footer!,
+          ],
+        ],
+      ),
+    );
+  }
+}
+
+class _AttachmentPlaceholder extends StatelessWidget {
+  const _AttachmentPlaceholder({
+    required this.width,
+    required this.height,
+    required this.label,
+    this.onTap,
+  });
+
+  final double width;
+  final double height;
+  final String label;
+  final VoidCallback? onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(AppDimens.radius12),
+      child: Container(
+        width: width,
+        height: height,
+        decoration: BoxDecoration(
+          color: AppColors.surface,
+          borderRadius: BorderRadius.circular(AppDimens.radius12),
+          border: Border.all(color: AppColors.border),
+        ),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(
+              Icons.add_photo_alternate_outlined,
+              size: AppDimens.icon28,
+              color: AppColors.textHint,
+            ),
+            const SizedBox(height: AppDimens.spacing8),
+            Text(label, style: AppTextStyles.bodySmall),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _PreviewImageCard extends StatelessWidget {
+  const _PreviewImageCard({
+    required this.imagePath,
+    required this.width,
+    required this.height,
+    required this.onTap,
+  });
+
+  final String imagePath;
+  final double width;
+  final double height;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onTap,
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(AppDimens.radius12),
+        child: Container(
+          width: width,
+          height: height,
+          decoration: BoxDecoration(
+            border: Border.all(color: AppColors.border),
+            borderRadius: BorderRadius.circular(AppDimens.radius12),
+          ),
+          child: Image.file(File(imagePath), fit: BoxFit.cover),
+        ),
+      ),
+    );
+  }
+}
+
 class _ReceiptRow extends StatelessWidget {
-  const _ReceiptRow({required this.label, required this.value});
+  const _ReceiptRow({
+    required this.label,
+    required this.value,
+    required this.fontSize,
+  });
 
   final String label;
   final String value;
+  final double fontSize;
 
   @override
   Widget build(BuildContext context) {
@@ -459,11 +1038,17 @@ class _ReceiptRow extends StatelessWidget {
               label,
               style: AppTextStyles.bodyMedium.copyWith(
                 fontWeight: FontWeight.w600,
+                fontSize: fontSize,
               ),
             ),
           ),
           const SizedBox(width: AppDimens.spacing8),
-          Expanded(child: Text(value, style: AppTextStyles.bodyMedium)),
+          Expanded(
+            child: Text(
+              value,
+              style: AppTextStyles.bodyMedium.copyWith(fontSize: fontSize),
+            ),
+          ),
         ],
       ),
     );

@@ -25,6 +25,7 @@ Voucher _voucher({
     note: null,
     itemImagePath: null,
     dispatchReceiptImagePath: null,
+    dispatchReceiptSavedAt: null,
   );
 }
 

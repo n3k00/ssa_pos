@@ -7,12 +7,12 @@ class PrinterConnectionHealth {
   static Future<bool> Function()? debugConnectionStatusReader;
 
   static Future<bool> refresh(PrinterCore core) async {
-    final isActuallyConnected =
+    final isConnected =
         await (debugConnectionStatusReader?.call() ??
             PrintBluetoothThermal.connectionStatus);
-    if (!isActuallyConnected && core.hasConnectedPrinter) {
+    if (!isConnected && core.hasConnectedPrinter) {
       await core.disconnect();
     }
-    return isActuallyConnected;
+    return isConnected;
   }
 }

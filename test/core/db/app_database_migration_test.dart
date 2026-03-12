@@ -3,7 +3,9 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:ssa/core/db/app_database.dart';
 
 void main() {
-  test('upgrades v1 vouchers schema to include payment_status and indexes', () async {
+test(
+  'upgrades legacy vouchers schema to include payment_status and dispatch receipt metadata',
+  () async {
     final executor = NativeDatabase.memory(
       setup: (rawDb) {
         rawDb.execute('PRAGMA user_version = 1;');
@@ -44,6 +46,7 @@ void main() {
         .map((r) => (r.data['name'] ?? '').toString())
         .toSet();
     expect(columnNames, contains('payment_status'));
+    expect(columnNames, contains('dispatch_receipt_saved_at'));
 
     final indexes = await db.customSelect('PRAGMA index_list(vouchers)').get();
     final indexNames = indexes
@@ -57,5 +60,6 @@ void main() {
         await db.customSelect('SELECT COUNT(*) AS c FROM vouchers').getSingle();
     final count = countRow.read<int>('c');
     expect(count, 1);
-  });
+  },
+);
 }

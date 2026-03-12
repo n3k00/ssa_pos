@@ -6,11 +6,9 @@ class AppDrawer extends StatelessWidget {
   const AppDrawer({
     super.key,
     required this.activeRoute,
-    this.onConnectPrinterTap,
   });
 
   final String activeRoute;
-  final Future<void> Function()? onConnectPrinterTap;
 
   @override
   Widget build(BuildContext context) {
@@ -22,16 +20,13 @@ class AppDrawer extends StatelessWidget {
             const DrawerHeader(
               child: Align(
                 alignment: Alignment.bottomLeft,
-                child: Text(
-                  AppStrings.menu,
-                  style: AppTextStyles.headlineMedium,
-                ),
+                child: _DrawerHeaderTitle(),
               ),
             ),
             ListTile(
               selected: activeRoute == AppRoutes.home,
               leading: const Icon(Icons.home_outlined),
-              title: const Text(AppStrings.home),
+              title: Text(AppStrings.home),
               onTap: () {
                 Navigator.of(context).pop();
                 if (activeRoute == AppRoutes.home) {
@@ -45,7 +40,7 @@ class AppDrawer extends StatelessWidget {
             ListTile(
               selected: activeRoute == AppRoutes.voucherList,
               leading: const Icon(Icons.receipt_long_outlined),
-              title: const Text(AppStrings.voucherList),
+              title: Text(AppStrings.voucherList),
               onTap: () {
                 Navigator.of(context).pop();
                 if (activeRoute == AppRoutes.voucherList) {
@@ -55,23 +50,9 @@ class AppDrawer extends StatelessWidget {
               },
             ),
             ListTile(
-              leading: const Icon(Icons.bluetooth_searching),
-              title: const Text(AppStrings.connectPrinter),
-              onTap: () async {
-                Navigator.of(context).pop();
-                if (onConnectPrinterTap != null) {
-                  await onConnectPrinterTap!();
-                  return;
-                }
-                Navigator.of(
-                  context,
-                ).pushNamedAndRemoveUntil(AppRoutes.home, (route) => false);
-              },
-            ),
-            ListTile(
               selected: activeRoute == AppRoutes.printerSettings,
               leading: const Icon(Icons.settings_outlined),
-              title: const Text(AppStrings.printerSettings),
+              title: Text(AppStrings.printerSettings),
               onTap: () {
                 Navigator.of(context).pop();
                 if (activeRoute == AppRoutes.printerSettings) {
@@ -84,5 +65,14 @@ class AppDrawer extends StatelessWidget {
         ),
       ),
     );
+  }
+}
+
+class _DrawerHeaderTitle extends StatelessWidget {
+  const _DrawerHeaderTitle();
+
+  @override
+  Widget build(BuildContext context) {
+    return Text(AppStrings.menu, style: AppTextStyles.headlineMedium);
   }
 }

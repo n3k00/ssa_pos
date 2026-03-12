@@ -4,11 +4,11 @@ import 'package:ssa/app/design_system.dart';
 class AppErrorView extends StatelessWidget {
   const AppErrorView({
     super.key,
-    this.message = AppStrings.errorGeneric,
+    this.message,
     this.onRetry,
   });
 
-  final String message;
+  final String? message;
   final VoidCallback? onRetry;
 
   @override
@@ -22,7 +22,7 @@ class AppErrorView extends StatelessWidget {
             const Icon(Icons.error_outline, color: AppColors.error, size: 40),
             const SizedBox(height: AppDimens.spacing12),
             Text(
-              message,
+              message ?? AppStrings.errorGeneric,
               style: AppTextStyles.bodyMedium,
               textAlign: TextAlign.center,
             ),
@@ -32,7 +32,7 @@ class AppErrorView extends StatelessWidget {
                 width: 160,
                 child: ElevatedButton(
                   onPressed: onRetry,
-                  child: const Text(AppStrings.retry),
+                  child: Text(AppStrings.retry),
                 ),
               ),
             ],

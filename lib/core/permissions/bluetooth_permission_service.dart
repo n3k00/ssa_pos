@@ -10,6 +10,11 @@ enum BluetoothPermissionResult {
   permanentlyDenied,
 }
 
+abstract class BluetoothPermissionClient {
+  Future<bool> hasRequiredPermissions();
+  Future<BluetoothPermissionResult> ensureGranted();
+}
+
 class BluetoothPermissionService {
   const BluetoothPermissionService._();
 
@@ -63,5 +68,17 @@ class BluetoothPermissionService {
     } catch (_) {
       return BluetoothPermissionResult.denied;
     }
+  }
+}
+
+class DefaultBluetoothPermissionClient implements BluetoothPermissionClient {
+  @override
+  Future<BluetoothPermissionResult> ensureGranted() {
+    return BluetoothPermissionService.ensureGranted();
+  }
+
+  @override
+  Future<bool> hasRequiredPermissions() {
+    return BluetoothPermissionService.hasRequiredPermissions();
   }
 }

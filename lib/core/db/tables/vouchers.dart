@@ -16,6 +16,8 @@ class Vouchers extends Table {
   TextColumn get itemImagePath => text().named('item_image_path').nullable()();
   TextColumn get dispatchReceiptImagePath =>
       text().named('dispatch_receipt_image_path').nullable()();
+  TextColumn get dispatchReceiptSavedAt =>
+      text().named('dispatch_receipt_saved_at').nullable()();
 
   @override
   Set<Column<Object>> get primaryKey => {id};

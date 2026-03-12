@@ -144,6 +144,17 @@ class $VouchersTable extends Vouchers with TableInfo<$VouchersTable, Voucher> {
         type: DriftSqlType.string,
         requiredDuringInsert: false,
       );
+  static const VerificationMeta _dispatchReceiptSavedAtMeta =
+      const VerificationMeta('dispatchReceiptSavedAt');
+  @override
+  late final GeneratedColumn<String> dispatchReceiptSavedAt =
+      GeneratedColumn<String>(
+        'dispatch_receipt_saved_at',
+        aliasedName,
+        true,
+        type: DriftSqlType.string,
+        requiredDuringInsert: false,
+      );
   @override
   List<GeneratedColumn> get $columns => [
     id,
@@ -159,6 +170,7 @@ class $VouchersTable extends Vouchers with TableInfo<$VouchersTable, Voucher> {
     note,
     itemImagePath,
     dispatchReceiptImagePath,
+    dispatchReceiptSavedAt,
   ];
   @override
   String get aliasedName => _alias ?? actualTableName;
@@ -281,6 +293,15 @@ class $VouchersTable extends Vouchers with TableInfo<$VouchersTable, Voucher> {
         ),
       );
     }
+    if (data.containsKey('dispatch_receipt_saved_at')) {
+      context.handle(
+        _dispatchReceiptSavedAtMeta,
+        dispatchReceiptSavedAt.isAcceptableOrUnknown(
+          data['dispatch_receipt_saved_at']!,
+          _dispatchReceiptSavedAtMeta,
+        ),
+      );
+    }
     return context;
   }
 
@@ -342,6 +363,10 @@ class $VouchersTable extends Vouchers with TableInfo<$VouchersTable, Voucher> {
         DriftSqlType.string,
         data['${effectivePrefix}dispatch_receipt_image_path'],
       ),
+      dispatchReceiptSavedAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}dispatch_receipt_saved_at'],
+      ),
     );
   }
 
@@ -365,6 +390,7 @@ class Voucher extends DataClass implements Insertable<Voucher> {
   final String? note;
   final String? itemImagePath;
   final String? dispatchReceiptImagePath;
+  final String? dispatchReceiptSavedAt;
   const Voucher({
     required this.id,
     required this.createdAt,
@@ -379,6 +405,7 @@ class Voucher extends DataClass implements Insertable<Voucher> {
     this.note,
     this.itemImagePath,
     this.dispatchReceiptImagePath,
+    this.dispatchReceiptSavedAt,
   });
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
@@ -406,6 +433,11 @@ class Voucher extends DataClass implements Insertable<Voucher> {
         dispatchReceiptImagePath,
       );
     }
+    if (!nullToAbsent || dispatchReceiptSavedAt != null) {
+      map['dispatch_receipt_saved_at'] = Variable<String>(
+        dispatchReceiptSavedAt,
+      );
+    }
     return map;
   }
 
@@ -430,6 +462,9 @@ class Voucher extends DataClass implements Insertable<Voucher> {
       dispatchReceiptImagePath: dispatchReceiptImagePath == null && nullToAbsent
           ? const Value.absent()
           : Value(dispatchReceiptImagePath),
+      dispatchReceiptSavedAt: dispatchReceiptSavedAt == null && nullToAbsent
+          ? const Value.absent()
+          : Value(dispatchReceiptSavedAt),
     );
   }
 
@@ -454,6 +489,9 @@ class Voucher extends DataClass implements Insertable<Voucher> {
       dispatchReceiptImagePath: serializer.fromJson<String?>(
         json['dispatchReceiptImagePath'],
       ),
+      dispatchReceiptSavedAt: serializer.fromJson<String?>(
+        json['dispatchReceiptSavedAt'],
+      ),
     );
   }
   @override
@@ -475,6 +513,9 @@ class Voucher extends DataClass implements Insertable<Voucher> {
       'dispatchReceiptImagePath': serializer.toJson<String?>(
         dispatchReceiptImagePath,
       ),
+      'dispatchReceiptSavedAt': serializer.toJson<String?>(
+        dispatchReceiptSavedAt,
+      ),
     };
   }
 
@@ -492,6 +533,7 @@ class Voucher extends DataClass implements Insertable<Voucher> {
     Value<String?> note = const Value.absent(),
     Value<String?> itemImagePath = const Value.absent(),
     Value<String?> dispatchReceiptImagePath = const Value.absent(),
+    Value<String?> dispatchReceiptSavedAt = const Value.absent(),
   }) => Voucher(
     id: id ?? this.id,
     createdAt: createdAt ?? this.createdAt,
@@ -512,6 +554,9 @@ class Voucher extends DataClass implements Insertable<Voucher> {
     dispatchReceiptImagePath: dispatchReceiptImagePath.present
         ? dispatchReceiptImagePath.value
         : this.dispatchReceiptImagePath,
+    dispatchReceiptSavedAt: dispatchReceiptSavedAt.present
+        ? dispatchReceiptSavedAt.value
+        : this.dispatchReceiptSavedAt,
   );
   Voucher copyWithCompanion(VouchersCompanion data) {
     return Voucher(
@@ -540,6 +585,9 @@ class Voucher extends DataClass implements Insertable<Voucher> {
       dispatchReceiptImagePath: data.dispatchReceiptImagePath.present
           ? data.dispatchReceiptImagePath.value
           : this.dispatchReceiptImagePath,
+      dispatchReceiptSavedAt: data.dispatchReceiptSavedAt.present
+          ? data.dispatchReceiptSavedAt.value
+          : this.dispatchReceiptSavedAt,
     );
   }
 
@@ -558,7 +606,8 @@ class Voucher extends DataClass implements Insertable<Voucher> {
           ..write('parcelNumber: $parcelNumber, ')
           ..write('note: $note, ')
           ..write('itemImagePath: $itemImagePath, ')
-          ..write('dispatchReceiptImagePath: $dispatchReceiptImagePath')
+          ..write('dispatchReceiptImagePath: $dispatchReceiptImagePath, ')
+          ..write('dispatchReceiptSavedAt: $dispatchReceiptSavedAt')
           ..write(')'))
         .toString();
   }
@@ -578,6 +627,7 @@ class Voucher extends DataClass implements Insertable<Voucher> {
     note,
     itemImagePath,
     dispatchReceiptImagePath,
+    dispatchReceiptSavedAt,
   );
   @override
   bool operator ==(Object other) =>
@@ -595,7 +645,8 @@ class Voucher extends DataClass implements Insertable<Voucher> {
           other.parcelNumber == this.parcelNumber &&
           other.note == this.note &&
           other.itemImagePath == this.itemImagePath &&
-          other.dispatchReceiptImagePath == this.dispatchReceiptImagePath);
+          other.dispatchReceiptImagePath == this.dispatchReceiptImagePath &&
+          other.dispatchReceiptSavedAt == this.dispatchReceiptSavedAt);
 }
 
 class VouchersCompanion extends UpdateCompanion<Voucher> {
@@ -612,6 +663,7 @@ class VouchersCompanion extends UpdateCompanion<Voucher> {
   final Value<String?> note;
   final Value<String?> itemImagePath;
   final Value<String?> dispatchReceiptImagePath;
+  final Value<String?> dispatchReceiptSavedAt;
   final Value<int> rowid;
   const VouchersCompanion({
     this.id = const Value.absent(),
@@ -627,6 +679,7 @@ class VouchersCompanion extends UpdateCompanion<Voucher> {
     this.note = const Value.absent(),
     this.itemImagePath = const Value.absent(),
     this.dispatchReceiptImagePath = const Value.absent(),
+    this.dispatchReceiptSavedAt = const Value.absent(),
     this.rowid = const Value.absent(),
   });
   VouchersCompanion.insert({
@@ -643,6 +696,7 @@ class VouchersCompanion extends UpdateCompanion<Voucher> {
     this.note = const Value.absent(),
     this.itemImagePath = const Value.absent(),
     this.dispatchReceiptImagePath = const Value.absent(),
+    this.dispatchReceiptSavedAt = const Value.absent(),
     this.rowid = const Value.absent(),
   }) : id = Value(id),
        createdAt = Value(createdAt),
@@ -666,6 +720,7 @@ class VouchersCompanion extends UpdateCompanion<Voucher> {
     Expression<String>? note,
     Expression<String>? itemImagePath,
     Expression<String>? dispatchReceiptImagePath,
+    Expression<String>? dispatchReceiptSavedAt,
     Expression<int>? rowid,
   }) {
     return RawValuesInsertable({
@@ -683,6 +738,8 @@ class VouchersCompanion extends UpdateCompanion<Voucher> {
       if (itemImagePath != null) 'item_image_path': itemImagePath,
       if (dispatchReceiptImagePath != null)
         'dispatch_receipt_image_path': dispatchReceiptImagePath,
+      if (dispatchReceiptSavedAt != null)
+        'dispatch_receipt_saved_at': dispatchReceiptSavedAt,
       if (rowid != null) 'rowid': rowid,
     });
   }
@@ -701,6 +758,7 @@ class VouchersCompanion extends UpdateCompanion<Voucher> {
     Value<String?>? note,
     Value<String?>? itemImagePath,
     Value<String?>? dispatchReceiptImagePath,
+    Value<String?>? dispatchReceiptSavedAt,
     Value<int>? rowid,
   }) {
     return VouchersCompanion(
@@ -718,6 +776,8 @@ class VouchersCompanion extends UpdateCompanion<Voucher> {
       itemImagePath: itemImagePath ?? this.itemImagePath,
       dispatchReceiptImagePath:
           dispatchReceiptImagePath ?? this.dispatchReceiptImagePath,
+      dispatchReceiptSavedAt:
+          dispatchReceiptSavedAt ?? this.dispatchReceiptSavedAt,
       rowid: rowid ?? this.rowid,
     );
   }
@@ -766,6 +826,11 @@ class VouchersCompanion extends UpdateCompanion<Voucher> {
         dispatchReceiptImagePath.value,
       );
     }
+    if (dispatchReceiptSavedAt.present) {
+      map['dispatch_receipt_saved_at'] = Variable<String>(
+        dispatchReceiptSavedAt.value,
+      );
+    }
     if (rowid.present) {
       map['rowid'] = Variable<int>(rowid.value);
     }
@@ -788,6 +853,7 @@ class VouchersCompanion extends UpdateCompanion<Voucher> {
           ..write('note: $note, ')
           ..write('itemImagePath: $itemImagePath, ')
           ..write('dispatchReceiptImagePath: $dispatchReceiptImagePath, ')
+          ..write('dispatchReceiptSavedAt: $dispatchReceiptSavedAt, ')
           ..write('rowid: $rowid')
           ..write(')'))
         .toString();
@@ -820,6 +886,7 @@ typedef $$VouchersTableCreateCompanionBuilder =
       Value<String?> note,
       Value<String?> itemImagePath,
       Value<String?> dispatchReceiptImagePath,
+      Value<String?> dispatchReceiptSavedAt,
       Value<int> rowid,
     });
 typedef $$VouchersTableUpdateCompanionBuilder =
@@ -837,6 +904,7 @@ typedef $$VouchersTableUpdateCompanionBuilder =
       Value<String?> note,
       Value<String?> itemImagePath,
       Value<String?> dispatchReceiptImagePath,
+      Value<String?> dispatchReceiptSavedAt,
       Value<int> rowid,
     });
 
@@ -911,6 +979,11 @@ class $$VouchersTableFilterComposer
 
   ColumnFilters<String> get dispatchReceiptImagePath => $composableBuilder(
     column: $table.dispatchReceiptImagePath,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get dispatchReceiptSavedAt => $composableBuilder(
+    column: $table.dispatchReceiptSavedAt,
     builder: (column) => ColumnFilters(column),
   );
 }
@@ -988,6 +1061,11 @@ class $$VouchersTableOrderingComposer
     column: $table.dispatchReceiptImagePath,
     builder: (column) => ColumnOrderings(column),
   );
+
+  ColumnOrderings<String> get dispatchReceiptSavedAt => $composableBuilder(
+    column: $table.dispatchReceiptSavedAt,
+    builder: (column) => ColumnOrderings(column),
+  );
 }
 
 class $$VouchersTableAnnotationComposer
@@ -1049,6 +1127,11 @@ class $$VouchersTableAnnotationComposer
     column: $table.dispatchReceiptImagePath,
     builder: (column) => column,
   );
+
+  GeneratedColumn<String> get dispatchReceiptSavedAt => $composableBuilder(
+    column: $table.dispatchReceiptSavedAt,
+    builder: (column) => column,
+  );
 }
 
 class $$VouchersTableTableManager
@@ -1092,6 +1175,7 @@ class $$VouchersTableTableManager
                 Value<String?> note = const Value.absent(),
                 Value<String?> itemImagePath = const Value.absent(),
                 Value<String?> dispatchReceiptImagePath = const Value.absent(),
+                Value<String?> dispatchReceiptSavedAt = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
               }) => VouchersCompanion(
                 id: id,
@@ -1107,6 +1191,7 @@ class $$VouchersTableTableManager
                 note: note,
                 itemImagePath: itemImagePath,
                 dispatchReceiptImagePath: dispatchReceiptImagePath,
+                dispatchReceiptSavedAt: dispatchReceiptSavedAt,
                 rowid: rowid,
               ),
           createCompanionCallback:
@@ -1124,6 +1209,7 @@ class $$VouchersTableTableManager
                 Value<String?> note = const Value.absent(),
                 Value<String?> itemImagePath = const Value.absent(),
                 Value<String?> dispatchReceiptImagePath = const Value.absent(),
+                Value<String?> dispatchReceiptSavedAt = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
               }) => VouchersCompanion.insert(
                 id: id,
@@ -1139,6 +1225,7 @@ class $$VouchersTableTableManager
                 note: note,
                 itemImagePath: itemImagePath,
                 dispatchReceiptImagePath: dispatchReceiptImagePath,
+                dispatchReceiptSavedAt: dispatchReceiptSavedAt,
                 rowid: rowid,
               ),
           withReferenceMapper: (p0) => p0

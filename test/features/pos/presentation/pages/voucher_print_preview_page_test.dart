@@ -39,10 +39,14 @@ class _FakePrinterCore extends PrinterCore {
 
 class _FakeVoucherRepository implements VoucherRepository {
   int createCalls = 0;
+  int updateCalls = 0;
+  Voucher? latestVoucher;
+  Voucher? lastUpdatedVoucher;
 
   @override
   Future<void> create(Voucher voucher) async {
     createCalls++;
+    latestVoucher = voucher;
   }
 
   @override
@@ -55,7 +59,7 @@ class _FakeVoucherRepository implements VoucherRepository {
 
   @override
   Future<Voucher?> getById(String id) async {
-    return null;
+    return latestVoucher;
   }
 
   @override
@@ -64,7 +68,11 @@ class _FakeVoucherRepository implements VoucherRepository {
   }
 
   @override
-  Future<void> update(Voucher voucher) async {}
+  Future<void> update(Voucher voucher) async {
+    updateCalls++;
+    lastUpdatedVoucher = voucher;
+    latestVoucher = voucher;
+  }
 }
 
 class _Launcher extends StatelessWidget {
@@ -105,6 +113,7 @@ Voucher _sampleVoucher() {
     note: null,
     itemImagePath: null,
     dispatchReceiptImagePath: null,
+    dispatchReceiptSavedAt: null,
   );
 }
 
@@ -177,5 +186,40 @@ void main() {
 
     expect(repo.createCalls, 1);
     expect(find.text(AppStrings.previewTitle), findsNothing);
+  });
+
+  testWidgets('does not print when health refresh reports disconnected', (
+    tester,
+  ) async {
+    final core = _FakePrinterCore(connected: true, printResult: true);
+    final repo = _FakeVoucherRepository();
+    PrinterConnectionHealth.debugConnectionStatusReader = () async => false;
+
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          printerCoreProvider.overrideWith((ref) => core),
+          voucherRepositoryProvider.overrideWithValue(repo),
+        ],
+        child: MaterialApp(
+          theme: AppTheme.light,
+          home: _Launcher(
+            previewPage: VoucherPrintPreviewPage(
+              voucher: _sampleVoucher(),
+              captureReceiptBytes: () async => Uint8List.fromList(<int>[1, 2, 3]),
+            ),
+          ),
+        ),
+      ),
+    );
+
+    await tester.tap(find.text('Open'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text(AppStrings.printAndSave));
+    await tester.pumpAndSettle();
+
+    expect(repo.createCalls, 0);
+    expect(find.text(AppStrings.printerNotConnected), findsOneWidget);
+    expect(core.connected, isFalse);
   });
 }

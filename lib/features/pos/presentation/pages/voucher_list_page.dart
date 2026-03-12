@@ -1,10 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:permission_handler/permission_handler.dart';
-import 'package:pos_printer_kit/pos_printer_kit.dart';
 import 'package:ssa/app/design_system.dart';
 import 'package:ssa/app/router/app_router.dart';
-import 'package:ssa/core/permissions/bluetooth_permission_service.dart';
 import 'package:ssa/features/pos/domain/entities/voucher.dart';
 import 'package:ssa/features/pos/presentation/pages/voucher_print_preview_page.dart';
 import 'package:ssa/shared/providers/app_providers.dart';
@@ -22,6 +19,7 @@ class _VoucherListPageState extends ConsumerState<VoucherListPage> {
   final TextEditingController _searchController = TextEditingController();
   late Future<List<Voucher>> _historyFuture;
   String _query = '';
+  DateTime? _selectedDate;
 
   @override
   void initState() {
@@ -52,68 +50,6 @@ class _VoucherListPageState extends ConsumerState<VoucherListPage> {
     await next;
   }
 
-  Future<void> _initializePrinterCoreIfNeeded() async {
-    final initialized = ref.read(printerCoreInitializedProvider);
-    if (initialized) {
-      return;
-    }
-    final printerCore = ref.read(printerCoreProvider);
-    await printerCore.initialize();
-    ref.read(printerCoreInitializedProvider.notifier).state = true;
-  }
-
-  Future<void> _showOpenSettingsDialog() async {
-    await showDialog<void>(
-      context: context,
-      builder: (dialogContext) {
-        return AlertDialog(
-          title: const Text(AppStrings.permissionSettingsTitle),
-          content: const Text(AppStrings.permissionSettingsMessage),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.of(dialogContext).pop(),
-              child: const Text(AppStrings.cancel),
-            ),
-            TextButton(
-              onPressed: () async {
-                Navigator.of(dialogContext).pop();
-                await openAppSettings();
-              },
-              child: const Text(AppStrings.openSettings),
-            ),
-          ],
-        );
-      },
-    );
-  }
-
-  Future<void> _openPrinterConnectPage() async {
-    final printerCore = ref.read(printerCoreProvider);
-    final permissionResult = await BluetoothPermissionService.ensureGranted();
-    if (permissionResult == BluetoothPermissionResult.permanentlyDenied) {
-      if (!mounted) return;
-      await _showOpenSettingsDialog();
-      return;
-    }
-    if (permissionResult != BluetoothPermissionResult.granted) {
-      if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text(AppStrings.bluetoothPermissionRequired)),
-      );
-      return;
-    }
-
-    await _initializePrinterCoreIfNeeded();
-    if (!mounted) {
-      return;
-    }
-    await Navigator.of(context).push(
-      MaterialPageRoute<void>(
-        builder: (_) => PrinterConnectPage(core: printerCore),
-      ),
-    );
-  }
-
   void _onSearchChanged(String value) {
     setState(() {
       _query = value;
@@ -121,16 +57,88 @@ class _VoucherListPageState extends ConsumerState<VoucherListPage> {
     });
   }
 
+  Future<void> _pickDateFilter() async {
+    final now = DateTime.now();
+    final picked = await showDatePicker(
+      context: context,
+      initialDate: _selectedDate ?? now,
+      firstDate: DateTime(2020),
+      lastDate: DateTime(now.year + 2, 12, 31),
+    );
+    if (picked == null) {
+      return;
+    }
+    setState(() {
+      _selectedDate = DateTime(picked.year, picked.month, picked.day);
+      _historyFuture = _loadHistory();
+    });
+  }
+
+  void _clearDateFilter() {
+    setState(() {
+      _selectedDate = null;
+      _historyFuture = _loadHistory();
+    });
+  }
+
+  bool _matchesSelectedDate(Voucher voucher) {
+    final selected = _selectedDate;
+    if (selected == null) {
+      return true;
+    }
+    final date = voucher.createdAt;
+    return date.year == selected.year &&
+        date.month == selected.month &&
+        date.day == selected.day;
+  }
+
+  String _dateLabel(DateTime date) {
+    final day = date.day.toString().padLeft(2, '0');
+    final month = date.month.toString().padLeft(2, '0');
+    final year = date.year.toString();
+    return '$day-$month-$year';
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      drawer: AppDrawer(
-        activeRoute: AppRoutes.voucherList,
-        onConnectPrinterTap: _openPrinterConnectPage,
+      drawer: const AppDrawer(activeRoute: AppRoutes.voucherList),
+      appBar: AppBar(
+        title: Text(AppStrings.voucherListTitle),
+        actions: [
+          IconButton(
+            onPressed: _pickDateFilter,
+            tooltip: AppStrings.filterByDate,
+            icon: Icon(
+              Icons.calendar_month_outlined,
+              color: _selectedDate == null
+                  ? AppColors.textHint
+                  : AppColors.primary,
+            ),
+          ),
+          const SizedBox(width: AppDimens.spacing8),
+        ],
       ),
-      appBar: AppBar(title: const Text(AppStrings.voucherListTitle)),
       body: Column(
         children: [
+          if (_selectedDate != null)
+            Padding(
+              padding: const EdgeInsets.fromLTRB(
+                AppDimens.pagePadding,
+                AppDimens.spacing8,
+                AppDimens.pagePadding,
+                0,
+              ),
+              child: Align(
+                alignment: Alignment.centerLeft,
+                child: ActionChip(
+                  avatar: const Icon(Icons.event, size: AppDimens.icon16),
+                  label: Text(_dateLabel(_selectedDate!)),
+                  onPressed: _clearDateFilter,
+                  tooltip: AppStrings.clearDateFilter,
+                ),
+              ),
+            ),
           Padding(
             padding: const EdgeInsets.fromLTRB(
               AppDimens.pagePadding,
@@ -160,7 +168,7 @@ class _VoucherListPageState extends ConsumerState<VoucherListPage> {
                     child: TextField(
                       controller: _searchController,
                       onChanged: _onSearchChanged,
-                      decoration: const InputDecoration(
+                      decoration: InputDecoration(
                         hintText: AppStrings.voucherSearchHint,
                         border: InputBorder.none,
                         enabledBorder: InputBorder.none,
@@ -187,7 +195,7 @@ class _VoucherListPageState extends ConsumerState<VoucherListPage> {
               future: _historyFuture,
               builder: (context, snapshot) {
                 if (snapshot.connectionState == ConnectionState.waiting) {
-                  return const AppLoadingView(message: AppStrings.loading);
+                  return AppLoadingView(message: AppStrings.loading);
                 }
                 if (snapshot.hasError) {
                   return AppErrorView(
@@ -196,10 +204,12 @@ class _VoucherListPageState extends ConsumerState<VoucherListPage> {
                   );
                 }
 
-                final vouchers = snapshot.data ?? const <Voucher>[];
+                final vouchers = (snapshot.data ?? const <Voucher>[])
+                    .where(_matchesSelectedDate)
+                    .toList(growable: false);
                 if (vouchers.isEmpty) {
-                  return const AppEmptyView(
-                    message: 'No vouchers found.',
+                  return AppEmptyView(
+                    message: AppStrings.voucherEmptyMessage,
                     icon: Icons.receipt_long,
                   );
                 }
@@ -260,17 +270,18 @@ class _VoucherListPageState extends ConsumerState<VoucherListPage> {
                           final messenger = ScaffoldMessenger.of(this.context);
                           if (printed == true) {
                             messenger.showSnackBar(
-                              const SnackBar(
+                              SnackBar(
                                 content: Text(AppStrings.voucherReprinted),
                               ),
                             );
                           } else if (printed == false) {
                             messenger.showSnackBar(
-                              const SnackBar(
+                              SnackBar(
                                 content: Text(AppStrings.voucherReprintFailed),
                               ),
                             );
                           }
+                          await _refresh();
                         },
                       );
                     },
