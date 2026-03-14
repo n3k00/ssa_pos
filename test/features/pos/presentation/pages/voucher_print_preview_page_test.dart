@@ -117,6 +117,11 @@ Voucher _sampleVoucher() {
   );
 }
 
+Voucher _sampleVoucherWithPaymentStatus(String paymentStatus) {
+  final voucher = _sampleVoucher();
+  return voucher.copyWith(paymentStatus: paymentStatus);
+}
+
 void main() {
   setUp(() {
     PrinterConnectionHealth.debugConnectionStatusReader = () async => true;
@@ -221,5 +226,33 @@ void main() {
     expect(repo.createCalls, 0);
     expect(find.text(AppStrings.printerNotConnected), findsOneWidget);
     expect(core.connected, isFalse);
+  });
+
+  testWidgets('shows custom payment status text as entered', (tester) async {
+    final core = _FakePrinterCore(connected: true, printResult: true);
+    final repo = _FakeVoucherRepository();
+
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          printerCoreProvider.overrideWith((ref) => core),
+          voucherRepositoryProvider.overrideWithValue(repo),
+        ],
+        child: MaterialApp(
+          theme: AppTheme.light,
+          home: _Launcher(
+            previewPage: VoucherPrintPreviewPage(
+              voucher: _sampleVoucherWithPaymentStatus('Half paid, collect later'),
+              captureReceiptBytes: () async => Uint8List.fromList(<int>[1, 2, 3]),
+            ),
+          ),
+        ),
+      ),
+    );
+
+    await tester.tap(find.text('Open'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Half paid, collect later'), findsOneWidget);
   });
 }

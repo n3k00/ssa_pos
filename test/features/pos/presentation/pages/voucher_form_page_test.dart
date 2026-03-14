@@ -75,6 +75,7 @@ void main() {
     await tester.enterText(find.byType(TextFormField).at(2), 'Yangon');
     await tester.enterText(find.byType(TextFormField).at(3), 'fb.user');
     await tester.enterText(find.byType(TextFormField).at(4), 'P-001');
+    await tester.enterText(find.byType(TextFormField).at(5), 'Payment Due');
 
     await tester.ensureVisible(find.text(AppStrings.printPreview));
     await tester.tap(find.text(AppStrings.printPreview));

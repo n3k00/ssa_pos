@@ -13,6 +13,8 @@ import 'package:ssa/core/settings/receipt_settings_service.dart';
 import 'package:ssa/features/pos/data/datasources/voucher_image_local_datasource.dart';
 import 'package:ssa/features/pos/domain/entities/voucher.dart';
 import 'package:ssa/features/pos/presentation/models/dispatch_receipt_image_state.dart';
+import 'package:ssa/features/pos/presentation/widgets/receipt_attachment_card.dart';
+import 'package:ssa/features/pos/presentation/widgets/receipt_preview_card.dart';
 import 'package:ssa/shared/providers/app_providers.dart';
 
 class VoucherPrintPreviewPage extends ConsumerStatefulWidget {
@@ -297,9 +299,13 @@ class _VoucherPrintPreviewPageState
   }
 
   String _paymentStatusText(String code) {
-    return code == 'payment_paid'
-        ? AppStrings.paymentStatusPaid
-        : AppStrings.paymentStatusDue;
+    if (code == 'payment_paid') {
+      return AppStrings.paymentStatusPaid;
+    }
+    if (code == 'payment_due') {
+      return AppStrings.paymentStatusDue;
+    }
+    return code;
   }
 
   String _formatDateTime(String iso) {
@@ -367,7 +373,7 @@ class _VoucherPrintPreviewPageState
             ),
             const SizedBox(height: AppDimens.spacing12),
             if (hasItemImage)
-              _AttachmentCard(
+              ReceiptAttachmentCard(
                 title: AppStrings.itemImageLabel,
                 subtitle: AppStrings.tapImageToView,
                 imagePath: voucher.itemImagePath!,
@@ -391,7 +397,7 @@ class _VoucherPrintPreviewPageState
         ? AppStrings.changesNotSaved
         : _persistedDispatchReceiptAddedLabel() ?? AppStrings.tapImageToView;
 
-    return _AttachmentCard(
+    return ReceiptAttachmentCard(
       title: AppStrings.dispatchReceiptImageLabel,
       subtitle: subtitle,
       imagePath: displayedPath,
@@ -399,17 +405,17 @@ class _VoucherPrintPreviewPageState
       height: 216,
       onTap: displayedPath == null ? null : () => _showFullImage(displayedPath),
       primaryAction: displayedPath == null
-          ? _AttachmentAction(
+          ? AttachmentAction(
               icon: Icons.add_a_photo_outlined,
               onTap: _showDispatchSourceSheet,
             )
-          : _AttachmentAction(
+          : AttachmentAction(
               icon: Icons.edit_outlined,
               onTap: _showDispatchSourceSheet,
             ),
       secondaryAction: displayedPath == null
           ? null
-          : _AttachmentAction(
+          : AttachmentAction(
               icon: Icons.delete_outline,
               onTap: _removeDispatchReceiptImage,
             ),
@@ -684,88 +690,50 @@ class _VoucherPrintPreviewPageState
                       width: _receiptPreviewWidth,
                       child: ColoredBox(
                         color: AppColors.white,
-                        child: Container(
-                          padding: EdgeInsets.only(
-                            top: _receiptPaddingTop,
-                            left: _receiptPaddingHorizontal,
-                            right: _receiptPaddingHorizontal,
-                            bottom: _receiptPaddingBottom,
-                          ),
-                          decoration: BoxDecoration(
-                            color: AppColors.white,
-                            border: Border.all(color: AppColors.border),
-                          ),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Center(
-                                child: Text(
-                                  _receiptTitle,
-                                  style: AppTextStyles.headlineMedium.copyWith(
-                                    fontSize: _receiptTitleFontSize,
-                                  ),
-                                  textAlign: TextAlign.center,
-                                ),
-                              ),
-                              const SizedBox(height: AppDimens.spacing4),
-                              Center(
-                                child: Text(
-                                  _receiptPhones,
-                                  style: AppTextStyles.titleMedium.copyWith(
-                                    fontSize: _receiptPhonesFontSize,
-                                  ),
-                                  textAlign: TextAlign.center,
-                                ),
-                              ),
-                              const SizedBox(height: AppDimens.spacing8),
-                              const Divider(
-                                height: 1,
-                                color: AppColors.divider,
-                              ),
-                              _ReceiptRow(
-                                label: AppStrings.receiptDateTimeLabel,
-                                value: _formatDateTime(voucher.dateAndTime),
-                                fontSize: _receiptRowFontSize,
-                              ),
-                              _ReceiptRow(
-                                label: AppStrings.nameLabel,
-                                value: voucher.name,
-                                fontSize: _receiptRowFontSize,
-                              ),
-                              _ReceiptRow(
-                                label: AppStrings.phoneLabel,
-                                value: voucher.phone,
-                                fontSize: _receiptRowFontSize,
-                              ),
-                              _ReceiptRow(
-                                label: AppStrings.addressLabel,
-                                value: voucher.address,
-                                fontSize: _receiptRowFontSize,
-                              ),
-                              _ReceiptRow(
-                                label: AppStrings.facebookLabel,
-                                value: voucher.facebookAccount ?? '-',
-                                fontSize: _receiptRowFontSize,
-                              ),
-                              _ReceiptRow(
-                                label: AppStrings.parcelNumberLabel,
-                                value: voucher.parcelNumber,
-                                fontSize: _receiptRowFontSize,
-                              ),
-                              _ReceiptRow(
-                                label: AppStrings.paymentStatusLabel,
-                                value: _paymentStatusText(
-                                  voucher.paymentStatus,
-                                ),
-                                fontSize: _receiptRowFontSize,
-                              ),
-                              _ReceiptRow(
-                                label: AppStrings.noteLabel,
-                                value: voucher.note ?? '-',
-                                fontSize: _receiptRowFontSize,
-                              ),
-                            ],
-                          ),
+                        child: ReceiptPreviewCard(
+                          width: _receiptPreviewWidth,
+                          title: _receiptTitle,
+                          phones: _receiptPhones,
+                          titleFontSize: _receiptTitleFontSize,
+                          phonesFontSize: _receiptPhonesFontSize,
+                          rowFontSize: _receiptRowFontSize,
+                          paddingTop: _receiptPaddingTop,
+                          paddingHorizontal: _receiptPaddingHorizontal,
+                          paddingBottom: _receiptPaddingBottom,
+                          rows: [
+                            ReceiptPreviewRowData(
+                              label: AppStrings.receiptDateTimeLabel,
+                              value: _formatDateTime(voucher.dateAndTime),
+                            ),
+                            ReceiptPreviewRowData(
+                              label: AppStrings.nameLabel,
+                              value: voucher.name,
+                            ),
+                            ReceiptPreviewRowData(
+                              label: AppStrings.phoneLabel,
+                              value: voucher.phone,
+                            ),
+                            ReceiptPreviewRowData(
+                              label: AppStrings.addressLabel,
+                              value: voucher.address,
+                            ),
+                            ReceiptPreviewRowData(
+                              label: AppStrings.facebookLabel,
+                              value: voucher.facebookAccount ?? '-',
+                            ),
+                            ReceiptPreviewRowData(
+                              label: AppStrings.parcelNumberLabel,
+                              value: voucher.parcelNumber,
+                            ),
+                            ReceiptPreviewRowData(
+                              label: AppStrings.paymentStatusLabel,
+                              value: _paymentStatusText(voucher.paymentStatus),
+                            ),
+                            ReceiptPreviewRowData(
+                              label: AppStrings.noteLabel,
+                              value: voucher.note ?? '-',
+                            ),
+                          ],
                         ),
                       ),
                     ),
@@ -807,248 +775,6 @@ class _VoucherPrintPreviewPageState
             const ModalBarrier(dismissible: false, color: Color(0x66000000)),
             const Center(child: CircularProgressIndicator()),
           ],
-        ],
-      ),
-    );
-  }
-}
-
-class _OverlayActionIcon extends StatelessWidget {
-  const _OverlayActionIcon({required this.icon, required this.onTap});
-
-  final IconData icon;
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    return Material(
-      color: AppColors.black.withAlpha(115),
-      borderRadius: BorderRadius.circular(AppDimens.radius8),
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(AppDimens.radius8),
-        child: Padding(
-          padding: const EdgeInsets.all(AppDimens.spacing8),
-          child: Icon(icon, color: AppColors.white, size: AppDimens.icon20),
-        ),
-      ),
-    );
-  }
-}
-
-class _AttachmentAction {
-  const _AttachmentAction({required this.icon, required this.onTap});
-
-  final IconData icon;
-  final VoidCallback onTap;
-}
-
-class _AttachmentCard extends StatelessWidget {
-  const _AttachmentCard({
-    required this.title,
-    required this.subtitle,
-    required this.imagePath,
-    required this.width,
-    required this.height,
-    required this.onTap,
-    this.primaryAction,
-    this.secondaryAction,
-    this.footer,
-    this.emptyStateLabel,
-  });
-
-  final String title;
-  final String subtitle;
-  final String? imagePath;
-  final double width;
-  final double height;
-  final VoidCallback? onTap;
-  final _AttachmentAction? primaryAction;
-  final _AttachmentAction? secondaryAction;
-  final Widget? footer;
-  final String? emptyStateLabel;
-
-  @override
-  Widget build(BuildContext context) {
-    final hasImage = imagePath != null && imagePath!.isNotEmpty;
-
-    return Container(
-      padding: const EdgeInsets.all(AppDimens.spacing10),
-      decoration: BoxDecoration(
-        color: AppColors.background,
-        borderRadius: BorderRadius.circular(AppDimens.radius12),
-        border: Border.all(color: AppColors.divider),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(title, style: AppTextStyles.labelLarge),
-                    const SizedBox(height: AppDimens.spacing2),
-                    Text(subtitle, style: AppTextStyles.bodySmall),
-                  ],
-                ),
-              ),
-              if (primaryAction != null) ...[
-                _OverlayActionIcon(
-                  icon: primaryAction!.icon,
-                  onTap: primaryAction!.onTap,
-                ),
-              ],
-              if (secondaryAction != null) ...[
-                const SizedBox(width: AppDimens.spacing8),
-                _OverlayActionIcon(
-                  icon: secondaryAction!.icon,
-                  onTap: secondaryAction!.onTap,
-                ),
-              ],
-            ],
-          ),
-          const SizedBox(height: AppDimens.spacing10),
-          if (hasImage)
-            _PreviewImageCard(
-              imagePath: imagePath!,
-              width: width,
-              height: height,
-              onTap: onTap!,
-            )
-          else
-            _AttachmentPlaceholder(
-              width: width,
-              height: height,
-              label: emptyStateLabel ?? title,
-              onTap: primaryAction?.onTap,
-            ),
-          if (footer != null) ...[
-            const SizedBox(height: AppDimens.spacing10),
-            footer!,
-          ],
-        ],
-      ),
-    );
-  }
-}
-
-class _AttachmentPlaceholder extends StatelessWidget {
-  const _AttachmentPlaceholder({
-    required this.width,
-    required this.height,
-    required this.label,
-    this.onTap,
-  });
-
-  final double width;
-  final double height;
-  final String label;
-  final VoidCallback? onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(AppDimens.radius12),
-      child: Container(
-        width: width,
-        height: height,
-        decoration: BoxDecoration(
-          color: AppColors.surface,
-          borderRadius: BorderRadius.circular(AppDimens.radius12),
-          border: Border.all(color: AppColors.border),
-        ),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(
-              Icons.add_photo_alternate_outlined,
-              size: AppDimens.icon28,
-              color: AppColors.textHint,
-            ),
-            const SizedBox(height: AppDimens.spacing8),
-            Text(label, style: AppTextStyles.bodySmall),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-class _PreviewImageCard extends StatelessWidget {
-  const _PreviewImageCard({
-    required this.imagePath,
-    required this.width,
-    required this.height,
-    required this.onTap,
-  });
-
-  final String imagePath;
-  final double width;
-  final double height;
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: onTap,
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(AppDimens.radius12),
-        child: Container(
-          width: width,
-          height: height,
-          decoration: BoxDecoration(
-            border: Border.all(color: AppColors.border),
-            borderRadius: BorderRadius.circular(AppDimens.radius12),
-          ),
-          child: Image.file(File(imagePath), fit: BoxFit.cover),
-        ),
-      ),
-    );
-  }
-}
-
-class _ReceiptRow extends StatelessWidget {
-  const _ReceiptRow({
-    required this.label,
-    required this.value,
-    required this.fontSize,
-  });
-
-  final String label;
-  final String value;
-  final double fontSize;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      decoration: const BoxDecoration(
-        border: Border(bottom: BorderSide(color: AppColors.divider)),
-      ),
-      padding: const EdgeInsets.symmetric(vertical: AppDimens.spacing8),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          SizedBox(
-            width: 104,
-            child: Text(
-              label,
-              style: AppTextStyles.bodyMedium.copyWith(
-                fontWeight: FontWeight.w600,
-                fontSize: fontSize,
-              ),
-            ),
-          ),
-          const SizedBox(width: AppDimens.spacing8),
-          Expanded(
-            child: Text(
-              value,
-              style: AppTextStyles.bodyMedium.copyWith(fontSize: fontSize),
-            ),
-          ),
         ],
       ),
     );

@@ -48,9 +48,9 @@ class VoucherFormSectionState extends ConsumerState<VoucherFormSection> {
   final TextEditingController _addressController = TextEditingController();
   final TextEditingController _facebookController = TextEditingController();
   final TextEditingController _parcelController = TextEditingController();
+  final TextEditingController _paymentStatusController = TextEditingController();
   final TextEditingController _noteController = TextEditingController();
   String? _itemImagePath;
-  String _paymentStatus = 'payment_due';
 
   void _clearKeyboardFocus() {
     FocusManager.instance.primaryFocus?.unfocus();
@@ -63,6 +63,7 @@ class VoucherFormSectionState extends ConsumerState<VoucherFormSection> {
     _addressController.dispose();
     _facebookController.dispose();
     _parcelController.dispose();
+    _paymentStatusController.dispose();
     _noteController.dispose();
     super.dispose();
   }
@@ -82,9 +83,9 @@ class VoucherFormSectionState extends ConsumerState<VoucherFormSection> {
       _addressController.clear();
       _facebookController.clear();
       _parcelController.clear();
+      _paymentStatusController.clear();
       _noteController.clear();
       _itemImagePath = null;
-      _paymentStatus = 'payment_due';
     });
   }
 
@@ -182,7 +183,7 @@ class VoucherFormSectionState extends ConsumerState<VoucherFormSection> {
       createdAt: now,
       updatedAt: now,
       dateAndTime: now.toIso8601String(),
-      paymentStatus: _paymentStatus,
+      paymentStatus: _paymentStatusController.text.trim(),
       name: _nameController.text.trim(),
       phone: _phoneController.text.trim(),
       address: _addressController.text.trim(),
@@ -261,29 +262,12 @@ class VoucherFormSectionState extends ConsumerState<VoucherFormSection> {
             validator: _requiredValidator,
           ),
           const SizedBox(height: AppDimens.spacing12),
-          DropdownButtonFormField<String>(
-            initialValue: _paymentStatus,
+          TextFormField(
+            controller: _paymentStatusController,
             decoration: InputDecoration(
               labelText: AppStrings.paymentStatusLabel,
             ),
-            items: [
-              DropdownMenuItem(
-                value: 'payment_due',
-                child: Text(AppStrings.paymentStatusDue),
-              ),
-              DropdownMenuItem(
-                value: 'payment_paid',
-                child: Text(AppStrings.paymentStatusPaid),
-              ),
-            ],
-            onChanged: (value) {
-              if (value == null) {
-                return;
-              }
-              setState(() {
-                _paymentStatus = value;
-              });
-            },
+            validator: _requiredValidator,
           ),
           const SizedBox(height: AppDimens.spacing12),
           TextFormField(
