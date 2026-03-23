@@ -155,6 +155,40 @@ class $VouchersTable extends Vouchers with TableInfo<$VouchersTable, Voucher> {
         type: DriftSqlType.string,
         requiredDuringInsert: false,
       );
+  static const VerificationMeta _syncStatusMeta = const VerificationMeta(
+    'syncStatus',
+  );
+  @override
+  late final GeneratedColumn<String> syncStatus = GeneratedColumn<String>(
+    'sync_status',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+    defaultValue: const Constant('pending'),
+  );
+  static const VerificationMeta _syncedAtMeta = const VerificationMeta(
+    'syncedAt',
+  );
+  @override
+  late final GeneratedColumn<String> syncedAt = GeneratedColumn<String>(
+    'synced_at',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _createdDeviceIdMeta = const VerificationMeta(
+    'createdDeviceId',
+  );
+  @override
+  late final GeneratedColumn<String> createdDeviceId = GeneratedColumn<String>(
+    'created_device_id',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
   @override
   List<GeneratedColumn> get $columns => [
     id,
@@ -171,6 +205,9 @@ class $VouchersTable extends Vouchers with TableInfo<$VouchersTable, Voucher> {
     itemImagePath,
     dispatchReceiptImagePath,
     dispatchReceiptSavedAt,
+    syncStatus,
+    syncedAt,
+    createdDeviceId,
   ];
   @override
   String get aliasedName => _alias ?? actualTableName;
@@ -302,6 +339,27 @@ class $VouchersTable extends Vouchers with TableInfo<$VouchersTable, Voucher> {
         ),
       );
     }
+    if (data.containsKey('sync_status')) {
+      context.handle(
+        _syncStatusMeta,
+        syncStatus.isAcceptableOrUnknown(data['sync_status']!, _syncStatusMeta),
+      );
+    }
+    if (data.containsKey('synced_at')) {
+      context.handle(
+        _syncedAtMeta,
+        syncedAt.isAcceptableOrUnknown(data['synced_at']!, _syncedAtMeta),
+      );
+    }
+    if (data.containsKey('created_device_id')) {
+      context.handle(
+        _createdDeviceIdMeta,
+        createdDeviceId.isAcceptableOrUnknown(
+          data['created_device_id']!,
+          _createdDeviceIdMeta,
+        ),
+      );
+    }
     return context;
   }
 
@@ -367,6 +425,18 @@ class $VouchersTable extends Vouchers with TableInfo<$VouchersTable, Voucher> {
         DriftSqlType.string,
         data['${effectivePrefix}dispatch_receipt_saved_at'],
       ),
+      syncStatus: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}sync_status'],
+      )!,
+      syncedAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}synced_at'],
+      ),
+      createdDeviceId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}created_device_id'],
+      ),
     );
   }
 
@@ -391,6 +461,9 @@ class Voucher extends DataClass implements Insertable<Voucher> {
   final String? itemImagePath;
   final String? dispatchReceiptImagePath;
   final String? dispatchReceiptSavedAt;
+  final String syncStatus;
+  final String? syncedAt;
+  final String? createdDeviceId;
   const Voucher({
     required this.id,
     required this.createdAt,
@@ -406,6 +479,9 @@ class Voucher extends DataClass implements Insertable<Voucher> {
     this.itemImagePath,
     this.dispatchReceiptImagePath,
     this.dispatchReceiptSavedAt,
+    required this.syncStatus,
+    this.syncedAt,
+    this.createdDeviceId,
   });
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
@@ -438,6 +514,13 @@ class Voucher extends DataClass implements Insertable<Voucher> {
         dispatchReceiptSavedAt,
       );
     }
+    map['sync_status'] = Variable<String>(syncStatus);
+    if (!nullToAbsent || syncedAt != null) {
+      map['synced_at'] = Variable<String>(syncedAt);
+    }
+    if (!nullToAbsent || createdDeviceId != null) {
+      map['created_device_id'] = Variable<String>(createdDeviceId);
+    }
     return map;
   }
 
@@ -465,6 +548,13 @@ class Voucher extends DataClass implements Insertable<Voucher> {
       dispatchReceiptSavedAt: dispatchReceiptSavedAt == null && nullToAbsent
           ? const Value.absent()
           : Value(dispatchReceiptSavedAt),
+      syncStatus: Value(syncStatus),
+      syncedAt: syncedAt == null && nullToAbsent
+          ? const Value.absent()
+          : Value(syncedAt),
+      createdDeviceId: createdDeviceId == null && nullToAbsent
+          ? const Value.absent()
+          : Value(createdDeviceId),
     );
   }
 
@@ -492,6 +582,9 @@ class Voucher extends DataClass implements Insertable<Voucher> {
       dispatchReceiptSavedAt: serializer.fromJson<String?>(
         json['dispatchReceiptSavedAt'],
       ),
+      syncStatus: serializer.fromJson<String>(json['syncStatus']),
+      syncedAt: serializer.fromJson<String?>(json['syncedAt']),
+      createdDeviceId: serializer.fromJson<String?>(json['createdDeviceId']),
     );
   }
   @override
@@ -516,6 +609,9 @@ class Voucher extends DataClass implements Insertable<Voucher> {
       'dispatchReceiptSavedAt': serializer.toJson<String?>(
         dispatchReceiptSavedAt,
       ),
+      'syncStatus': serializer.toJson<String>(syncStatus),
+      'syncedAt': serializer.toJson<String?>(syncedAt),
+      'createdDeviceId': serializer.toJson<String?>(createdDeviceId),
     };
   }
 
@@ -534,6 +630,9 @@ class Voucher extends DataClass implements Insertable<Voucher> {
     Value<String?> itemImagePath = const Value.absent(),
     Value<String?> dispatchReceiptImagePath = const Value.absent(),
     Value<String?> dispatchReceiptSavedAt = const Value.absent(),
+    String? syncStatus,
+    Value<String?> syncedAt = const Value.absent(),
+    Value<String?> createdDeviceId = const Value.absent(),
   }) => Voucher(
     id: id ?? this.id,
     createdAt: createdAt ?? this.createdAt,
@@ -557,6 +656,11 @@ class Voucher extends DataClass implements Insertable<Voucher> {
     dispatchReceiptSavedAt: dispatchReceiptSavedAt.present
         ? dispatchReceiptSavedAt.value
         : this.dispatchReceiptSavedAt,
+    syncStatus: syncStatus ?? this.syncStatus,
+    syncedAt: syncedAt.present ? syncedAt.value : this.syncedAt,
+    createdDeviceId: createdDeviceId.present
+        ? createdDeviceId.value
+        : this.createdDeviceId,
   );
   Voucher copyWithCompanion(VouchersCompanion data) {
     return Voucher(
@@ -588,6 +692,13 @@ class Voucher extends DataClass implements Insertable<Voucher> {
       dispatchReceiptSavedAt: data.dispatchReceiptSavedAt.present
           ? data.dispatchReceiptSavedAt.value
           : this.dispatchReceiptSavedAt,
+      syncStatus: data.syncStatus.present
+          ? data.syncStatus.value
+          : this.syncStatus,
+      syncedAt: data.syncedAt.present ? data.syncedAt.value : this.syncedAt,
+      createdDeviceId: data.createdDeviceId.present
+          ? data.createdDeviceId.value
+          : this.createdDeviceId,
     );
   }
 
@@ -607,7 +718,10 @@ class Voucher extends DataClass implements Insertable<Voucher> {
           ..write('note: $note, ')
           ..write('itemImagePath: $itemImagePath, ')
           ..write('dispatchReceiptImagePath: $dispatchReceiptImagePath, ')
-          ..write('dispatchReceiptSavedAt: $dispatchReceiptSavedAt')
+          ..write('dispatchReceiptSavedAt: $dispatchReceiptSavedAt, ')
+          ..write('syncStatus: $syncStatus, ')
+          ..write('syncedAt: $syncedAt, ')
+          ..write('createdDeviceId: $createdDeviceId')
           ..write(')'))
         .toString();
   }
@@ -628,6 +742,9 @@ class Voucher extends DataClass implements Insertable<Voucher> {
     itemImagePath,
     dispatchReceiptImagePath,
     dispatchReceiptSavedAt,
+    syncStatus,
+    syncedAt,
+    createdDeviceId,
   );
   @override
   bool operator ==(Object other) =>
@@ -646,7 +763,10 @@ class Voucher extends DataClass implements Insertable<Voucher> {
           other.note == this.note &&
           other.itemImagePath == this.itemImagePath &&
           other.dispatchReceiptImagePath == this.dispatchReceiptImagePath &&
-          other.dispatchReceiptSavedAt == this.dispatchReceiptSavedAt);
+          other.dispatchReceiptSavedAt == this.dispatchReceiptSavedAt &&
+          other.syncStatus == this.syncStatus &&
+          other.syncedAt == this.syncedAt &&
+          other.createdDeviceId == this.createdDeviceId);
 }
 
 class VouchersCompanion extends UpdateCompanion<Voucher> {
@@ -664,6 +784,9 @@ class VouchersCompanion extends UpdateCompanion<Voucher> {
   final Value<String?> itemImagePath;
   final Value<String?> dispatchReceiptImagePath;
   final Value<String?> dispatchReceiptSavedAt;
+  final Value<String> syncStatus;
+  final Value<String?> syncedAt;
+  final Value<String?> createdDeviceId;
   final Value<int> rowid;
   const VouchersCompanion({
     this.id = const Value.absent(),
@@ -680,6 +803,9 @@ class VouchersCompanion extends UpdateCompanion<Voucher> {
     this.itemImagePath = const Value.absent(),
     this.dispatchReceiptImagePath = const Value.absent(),
     this.dispatchReceiptSavedAt = const Value.absent(),
+    this.syncStatus = const Value.absent(),
+    this.syncedAt = const Value.absent(),
+    this.createdDeviceId = const Value.absent(),
     this.rowid = const Value.absent(),
   });
   VouchersCompanion.insert({
@@ -697,6 +823,9 @@ class VouchersCompanion extends UpdateCompanion<Voucher> {
     this.itemImagePath = const Value.absent(),
     this.dispatchReceiptImagePath = const Value.absent(),
     this.dispatchReceiptSavedAt = const Value.absent(),
+    this.syncStatus = const Value.absent(),
+    this.syncedAt = const Value.absent(),
+    this.createdDeviceId = const Value.absent(),
     this.rowid = const Value.absent(),
   }) : id = Value(id),
        createdAt = Value(createdAt),
@@ -721,6 +850,9 @@ class VouchersCompanion extends UpdateCompanion<Voucher> {
     Expression<String>? itemImagePath,
     Expression<String>? dispatchReceiptImagePath,
     Expression<String>? dispatchReceiptSavedAt,
+    Expression<String>? syncStatus,
+    Expression<String>? syncedAt,
+    Expression<String>? createdDeviceId,
     Expression<int>? rowid,
   }) {
     return RawValuesInsertable({
@@ -740,6 +872,9 @@ class VouchersCompanion extends UpdateCompanion<Voucher> {
         'dispatch_receipt_image_path': dispatchReceiptImagePath,
       if (dispatchReceiptSavedAt != null)
         'dispatch_receipt_saved_at': dispatchReceiptSavedAt,
+      if (syncStatus != null) 'sync_status': syncStatus,
+      if (syncedAt != null) 'synced_at': syncedAt,
+      if (createdDeviceId != null) 'created_device_id': createdDeviceId,
       if (rowid != null) 'rowid': rowid,
     });
   }
@@ -759,6 +894,9 @@ class VouchersCompanion extends UpdateCompanion<Voucher> {
     Value<String?>? itemImagePath,
     Value<String?>? dispatchReceiptImagePath,
     Value<String?>? dispatchReceiptSavedAt,
+    Value<String>? syncStatus,
+    Value<String?>? syncedAt,
+    Value<String?>? createdDeviceId,
     Value<int>? rowid,
   }) {
     return VouchersCompanion(
@@ -778,6 +916,9 @@ class VouchersCompanion extends UpdateCompanion<Voucher> {
           dispatchReceiptImagePath ?? this.dispatchReceiptImagePath,
       dispatchReceiptSavedAt:
           dispatchReceiptSavedAt ?? this.dispatchReceiptSavedAt,
+      syncStatus: syncStatus ?? this.syncStatus,
+      syncedAt: syncedAt ?? this.syncedAt,
+      createdDeviceId: createdDeviceId ?? this.createdDeviceId,
       rowid: rowid ?? this.rowid,
     );
   }
@@ -831,6 +972,15 @@ class VouchersCompanion extends UpdateCompanion<Voucher> {
         dispatchReceiptSavedAt.value,
       );
     }
+    if (syncStatus.present) {
+      map['sync_status'] = Variable<String>(syncStatus.value);
+    }
+    if (syncedAt.present) {
+      map['synced_at'] = Variable<String>(syncedAt.value);
+    }
+    if (createdDeviceId.present) {
+      map['created_device_id'] = Variable<String>(createdDeviceId.value);
+    }
     if (rowid.present) {
       map['rowid'] = Variable<int>(rowid.value);
     }
@@ -854,6 +1004,9 @@ class VouchersCompanion extends UpdateCompanion<Voucher> {
           ..write('itemImagePath: $itemImagePath, ')
           ..write('dispatchReceiptImagePath: $dispatchReceiptImagePath, ')
           ..write('dispatchReceiptSavedAt: $dispatchReceiptSavedAt, ')
+          ..write('syncStatus: $syncStatus, ')
+          ..write('syncedAt: $syncedAt, ')
+          ..write('createdDeviceId: $createdDeviceId, ')
           ..write('rowid: $rowid')
           ..write(')'))
         .toString();
@@ -887,6 +1040,9 @@ typedef $$VouchersTableCreateCompanionBuilder =
       Value<String?> itemImagePath,
       Value<String?> dispatchReceiptImagePath,
       Value<String?> dispatchReceiptSavedAt,
+      Value<String> syncStatus,
+      Value<String?> syncedAt,
+      Value<String?> createdDeviceId,
       Value<int> rowid,
     });
 typedef $$VouchersTableUpdateCompanionBuilder =
@@ -905,6 +1061,9 @@ typedef $$VouchersTableUpdateCompanionBuilder =
       Value<String?> itemImagePath,
       Value<String?> dispatchReceiptImagePath,
       Value<String?> dispatchReceiptSavedAt,
+      Value<String> syncStatus,
+      Value<String?> syncedAt,
+      Value<String?> createdDeviceId,
       Value<int> rowid,
     });
 
@@ -984,6 +1143,21 @@ class $$VouchersTableFilterComposer
 
   ColumnFilters<String> get dispatchReceiptSavedAt => $composableBuilder(
     column: $table.dispatchReceiptSavedAt,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get syncStatus => $composableBuilder(
+    column: $table.syncStatus,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get syncedAt => $composableBuilder(
+    column: $table.syncedAt,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get createdDeviceId => $composableBuilder(
+    column: $table.createdDeviceId,
     builder: (column) => ColumnFilters(column),
   );
 }
@@ -1066,6 +1240,21 @@ class $$VouchersTableOrderingComposer
     column: $table.dispatchReceiptSavedAt,
     builder: (column) => ColumnOrderings(column),
   );
+
+  ColumnOrderings<String> get syncStatus => $composableBuilder(
+    column: $table.syncStatus,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get syncedAt => $composableBuilder(
+    column: $table.syncedAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get createdDeviceId => $composableBuilder(
+    column: $table.createdDeviceId,
+    builder: (column) => ColumnOrderings(column),
+  );
 }
 
 class $$VouchersTableAnnotationComposer
@@ -1132,6 +1321,19 @@ class $$VouchersTableAnnotationComposer
     column: $table.dispatchReceiptSavedAt,
     builder: (column) => column,
   );
+
+  GeneratedColumn<String> get syncStatus => $composableBuilder(
+    column: $table.syncStatus,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get syncedAt =>
+      $composableBuilder(column: $table.syncedAt, builder: (column) => column);
+
+  GeneratedColumn<String> get createdDeviceId => $composableBuilder(
+    column: $table.createdDeviceId,
+    builder: (column) => column,
+  );
 }
 
 class $$VouchersTableTableManager
@@ -1176,6 +1378,9 @@ class $$VouchersTableTableManager
                 Value<String?> itemImagePath = const Value.absent(),
                 Value<String?> dispatchReceiptImagePath = const Value.absent(),
                 Value<String?> dispatchReceiptSavedAt = const Value.absent(),
+                Value<String> syncStatus = const Value.absent(),
+                Value<String?> syncedAt = const Value.absent(),
+                Value<String?> createdDeviceId = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
               }) => VouchersCompanion(
                 id: id,
@@ -1192,6 +1397,9 @@ class $$VouchersTableTableManager
                 itemImagePath: itemImagePath,
                 dispatchReceiptImagePath: dispatchReceiptImagePath,
                 dispatchReceiptSavedAt: dispatchReceiptSavedAt,
+                syncStatus: syncStatus,
+                syncedAt: syncedAt,
+                createdDeviceId: createdDeviceId,
                 rowid: rowid,
               ),
           createCompanionCallback:
@@ -1210,6 +1418,9 @@ class $$VouchersTableTableManager
                 Value<String?> itemImagePath = const Value.absent(),
                 Value<String?> dispatchReceiptImagePath = const Value.absent(),
                 Value<String?> dispatchReceiptSavedAt = const Value.absent(),
+                Value<String> syncStatus = const Value.absent(),
+                Value<String?> syncedAt = const Value.absent(),
+                Value<String?> createdDeviceId = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
               }) => VouchersCompanion.insert(
                 id: id,
@@ -1226,6 +1437,9 @@ class $$VouchersTableTableManager
                 itemImagePath: itemImagePath,
                 dispatchReceiptImagePath: dispatchReceiptImagePath,
                 dispatchReceiptSavedAt: dispatchReceiptSavedAt,
+                syncStatus: syncStatus,
+                syncedAt: syncedAt,
+                createdDeviceId: createdDeviceId,
                 rowid: rowid,
               ),
           withReferenceMapper: (p0) => p0

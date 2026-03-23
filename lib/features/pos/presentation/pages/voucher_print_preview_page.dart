@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:io';
 import 'dart:typed_data';
 import 'dart:ui' as ui;
@@ -128,6 +129,17 @@ class _VoucherPrintPreviewPageState
   }
 
   Future<void> _showFullImage(String imagePath) async {
+    final imageFile = File(imagePath);
+    if (!imageFile.existsSync()) {
+      if (!mounted) {
+        return;
+      }
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(AppStrings.errorGeneric)),
+      );
+      return;
+    }
+
     await showDialog<void>(
       context: context,
       builder: (dialogContext) {
@@ -138,7 +150,26 @@ class _VoucherPrintPreviewPageState
               InteractiveViewer(
                 child: ClipRRect(
                   borderRadius: BorderRadius.circular(AppDimens.radius12),
-                  child: Image.file(File(imagePath), fit: BoxFit.contain),
+                  child: Image.file(
+                    imageFile,
+                    fit: BoxFit.contain,
+                    errorBuilder: (context, error, stackTrace) {
+                      return ColoredBox(
+                        color: AppColors.surface,
+                        child: SizedBox(
+                          width: double.infinity,
+                          height: 280,
+                          child: Center(
+                            child: Icon(
+                              Icons.broken_image_outlined,
+                              size: AppDimens.icon28,
+                              color: AppColors.textHint,
+                            ),
+                          ),
+                        ),
+                      );
+                    },
+                  ),
                 ),
               ),
               Positioned(
@@ -253,6 +284,9 @@ class _VoucherPrintPreviewPageState
         dispatchReceiptSavedAt: _dispatchImageState.displayedPath == null
             ? null
             : DateTime.now().toIso8601String(),
+        syncStatus: 'pending',
+        syncedAt: null,
+        createdDeviceId: _voucher.createdDeviceId,
       );
       await repository.update(updated);
       final pendingDeletePath = _dispatchImageState.pendingDeletionPath;
@@ -282,6 +316,7 @@ class _VoucherPrintPreviewPageState
       ScaffoldMessenger.of(
         context,
       ).showSnackBar(SnackBar(content: Text(AppStrings.dispatchReceiptSaved)));
+      unawaited(ref.read(voucherSyncServiceProvider).syncIfAuthenticated());
     } catch (_) {
       if (!mounted) {
         return;
@@ -502,6 +537,7 @@ class _VoucherPrintPreviewPageState
 
       final repository = ref.read(voucherRepositoryProvider);
       await repository.create(_voucher);
+      unawaited(ref.read(voucherSyncServiceProvider).syncIfAuthenticated());
       if (!mounted) {
         return;
       }

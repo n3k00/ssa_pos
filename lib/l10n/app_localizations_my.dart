@@ -15,6 +15,36 @@ class AppLocalizationsMy extends AppLocalizations {
   String get homeTitle => 'SSA POS ပင်မစာမျက်နှာ';
 
   @override
+  String get loginTitle => 'အကောင့်ထဲဝင်မယ်';
+
+  @override
+  String get loginSubtitle => 'ဖုန်းနံပါတ်နဲ့ password ထည့်ပြီး ဆက်ဝင်ပါ။';
+
+  @override
+  String get signIn => 'ဝင်မယ်';
+
+  @override
+  String get phoneNumberLabel => 'ဖုန်းနံပါတ်';
+
+  @override
+  String get passwordLabel => 'Password';
+
+  @override
+  String get invalidPhoneNumber => 'မှန်ကန်တဲ့ မြန်မာဖုန်းနံပါတ်ကို ထည့်ပါ။';
+
+  @override
+  String get loginFailedGeneric => 'ဖုန်းနံပါတ် သို့မဟုတ် password မှားနေပါတယ်။';
+
+  @override
+  String get launchStarting => 'SSA POS ကိုစတင်နေသည်...';
+
+  @override
+  String get launchCheckingSession => 'session ကိုစစ်နေသည်...';
+
+  @override
+  String get authStateError => 'login state ကို စစ်မရပါ။';
+
+  @override
   String get connectPrinter => 'Printer ချိတ်မယ်';
 
   @override
@@ -37,6 +67,12 @@ class AppLocalizationsMy extends AppLocalizations {
 
   @override
   String get settings => 'ဆက်တင်';
+
+  @override
+  String get profileSettings => 'Profile';
+
+  @override
+  String get profileSettingsHint => 'ဖုန်းနံပါတ်နဲ့ sync status ကိုကြည့်မယ်';
 
   @override
   String get printerSettings => 'Printer ဆက်တင်';
@@ -76,6 +112,45 @@ class AppLocalizationsMy extends AppLocalizations {
 
   @override
   String get languageUpdated => 'Language ကိုပြောင်းပြီးပါပြီ။';
+
+  @override
+  String get syncNow => 'Sync Now';
+
+  @override
+  String get lastSyncTimeLabel => 'Last Sync Time';
+
+  @override
+  String get syncStatusLabel => 'Sync Status';
+
+  @override
+  String get syncingNow => 'Syncing...';
+
+  @override
+  String get syncFailed => 'Sync failed';
+
+  @override
+  String get syncReady => 'Up to date';
+
+  @override
+  String get syncNotStarted => 'Not synced yet';
+
+  @override
+  String get syncNever => 'Never';
+
+  @override
+  String get logout => 'Logout';
+
+  @override
+  String get logoutConfirmTitle => 'Logout';
+
+  @override
+  String get logoutConfirmMessage => 'အခု sign out လုပ်မလား';
+
+  @override
+  String get yes => 'Yes';
+
+  @override
+  String get no => 'No';
 
   @override
   String get exportBackup => 'Full Backup ထုတ်မယ်';

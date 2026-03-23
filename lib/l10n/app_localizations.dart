@@ -107,6 +107,66 @@ abstract class AppLocalizations {
   /// **'SSA POS Home'**
   String get homeTitle;
 
+  /// No description provided for @loginTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Sign In'**
+  String get loginTitle;
+
+  /// No description provided for @loginSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Use your phone number and password to continue.'**
+  String get loginSubtitle;
+
+  /// No description provided for @signIn.
+  ///
+  /// In en, this message translates to:
+  /// **'Sign In'**
+  String get signIn;
+
+  /// No description provided for @phoneNumberLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Phone Number'**
+  String get phoneNumberLabel;
+
+  /// No description provided for @passwordLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Password'**
+  String get passwordLabel;
+
+  /// No description provided for @invalidPhoneNumber.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter a valid Myanmar phone number.'**
+  String get invalidPhoneNumber;
+
+  /// No description provided for @loginFailedGeneric.
+  ///
+  /// In en, this message translates to:
+  /// **'Invalid phone number or password.'**
+  String get loginFailedGeneric;
+
+  /// No description provided for @launchStarting.
+  ///
+  /// In en, this message translates to:
+  /// **'Starting SSA POS...'**
+  String get launchStarting;
+
+  /// No description provided for @launchCheckingSession.
+  ///
+  /// In en, this message translates to:
+  /// **'Checking session...'**
+  String get launchCheckingSession;
+
+  /// No description provided for @authStateError.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not check the login state.'**
+  String get authStateError;
+
   /// No description provided for @connectPrinter.
   ///
   /// In en, this message translates to:
@@ -154,6 +214,18 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Settings'**
   String get settings;
+
+  /// No description provided for @profileSettings.
+  ///
+  /// In en, this message translates to:
+  /// **'Profile'**
+  String get profileSettings;
+
+  /// No description provided for @profileSettingsHint.
+  ///
+  /// In en, this message translates to:
+  /// **'View the account phone number and sync status'**
+  String get profileSettingsHint;
 
   /// No description provided for @printerSettings.
   ///
@@ -232,6 +304,84 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Language updated.'**
   String get languageUpdated;
+
+  /// No description provided for @syncNow.
+  ///
+  /// In en, this message translates to:
+  /// **'Sync Now'**
+  String get syncNow;
+
+  /// No description provided for @lastSyncTimeLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Last Sync Time'**
+  String get lastSyncTimeLabel;
+
+  /// No description provided for @syncStatusLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Sync Status'**
+  String get syncStatusLabel;
+
+  /// No description provided for @syncingNow.
+  ///
+  /// In en, this message translates to:
+  /// **'Syncing...'**
+  String get syncingNow;
+
+  /// No description provided for @syncFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Sync failed'**
+  String get syncFailed;
+
+  /// No description provided for @syncReady.
+  ///
+  /// In en, this message translates to:
+  /// **'Up to date'**
+  String get syncReady;
+
+  /// No description provided for @syncNotStarted.
+  ///
+  /// In en, this message translates to:
+  /// **'Not synced yet'**
+  String get syncNotStarted;
+
+  /// No description provided for @syncNever.
+  ///
+  /// In en, this message translates to:
+  /// **'Never'**
+  String get syncNever;
+
+  /// No description provided for @logout.
+  ///
+  /// In en, this message translates to:
+  /// **'Logout'**
+  String get logout;
+
+  /// No description provided for @logoutConfirmTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Logout'**
+  String get logoutConfirmTitle;
+
+  /// No description provided for @logoutConfirmMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'Do you want to sign out now?'**
+  String get logoutConfirmMessage;
+
+  /// No description provided for @yes.
+  ///
+  /// In en, this message translates to:
+  /// **'Yes'**
+  String get yes;
+
+  /// No description provided for @no.
+  ///
+  /// In en, this message translates to:
+  /// **'No'**
+  String get no;
 
   /// No description provided for @exportBackup.
   ///

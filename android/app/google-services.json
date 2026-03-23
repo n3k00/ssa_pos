@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "453501268343",
+    "project_id": "ssa-pos",
+    "storage_bucket": "ssa-pos.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:453501268343:android:c3f4927516c1e7ec493172",
+        "android_client_info": {
+          "package_name": "com.example.ssa"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBFh06JWDkmh147nV9VEQMkASTstWkqmeE"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:ssa/features/pos/presentation/pages/pos_home_page.dart';
+import 'package:ssa/features/launch/presentation/pages/launch_page.dart';
 import 'package:ssa/features/pos/presentation/pages/voucher_form_page.dart';
 import 'package:ssa/features/pos/presentation/pages/voucher_list_page.dart';
 import 'package:ssa/features/settings/presentation/pages/printer_settings_page.dart';
@@ -35,7 +35,7 @@ class AppRouter {
       default:
         return MaterialPageRoute<void>(
           settings: settings,
-          builder: (_) => const PosHomePage(),
+          builder: (_) => const LaunchPage(),
         );
     }
   }

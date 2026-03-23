@@ -60,4 +60,36 @@ void main() {
     expect(byPhone.map((e) => e.id), contains('1'));
     expect(byParcel.map((e) => e.id), contains('1'));
   });
+
+  test('preserves old and uuid-style ids through local storage', () async {
+    final database = db.AppDatabase.forTesting(NativeDatabase.memory());
+    final ds = VoucherLocalDataSource(database);
+    addTearDown(database.close);
+
+    const legacyId = 'v_1710000000000';
+    const uuidId = '550e8400-e29b-41d4-a716-446655440000';
+
+    await ds.create(
+      _voucher(
+        id: legacyId,
+        name: 'Legacy',
+        phone: '091111111',
+        parcel: 'L-001',
+      ),
+    );
+    await ds.create(
+      _voucher(
+        id: uuidId,
+        name: 'Uuid',
+        phone: '092222222',
+        parcel: 'U-001',
+      ),
+    );
+
+    final legacy = await ds.getById(legacyId);
+    final uuid = await ds.getById(uuidId);
+
+    expect(legacy?.id, legacyId);
+    expect(uuid?.id, uuidId);
+  });
 }

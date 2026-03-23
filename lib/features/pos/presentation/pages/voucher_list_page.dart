@@ -101,11 +101,37 @@ class _VoucherListPageState extends ConsumerState<VoucherListPage> {
 
   @override
   Widget build(BuildContext context) {
+    final syncState = ref.watch(voucherSyncControllerProvider);
+
     return Scaffold(
       drawer: const AppDrawer(activeRoute: AppRoutes.voucherList),
       appBar: AppBar(
         title: Text(AppStrings.voucherListTitle),
         actions: [
+          IconButton(
+            onPressed: syncState.isSyncing
+                ? null
+                : () async {
+                    await ref.read(voucherSyncServiceProvider).syncIfAuthenticated();
+                    if (!mounted) {
+                      return;
+                    }
+                    await _refresh();
+                  },
+            tooltip: AppStrings.syncNow,
+            icon: syncState.isSyncing
+                ? const SizedBox(
+                    width: AppDimens.icon20,
+                    height: AppDimens.icon20,
+                    child: CircularProgressIndicator(strokeWidth: 2),
+                  )
+                : Icon(
+                    Icons.sync,
+                    color: syncState.hasFailure
+                        ? AppColors.error
+                        : AppColors.textHint,
+                  ),
+          ),
           IconButton(
             onPressed: _pickDateFilter,
             tooltip: AppStrings.filterByDate,

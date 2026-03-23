@@ -3,7 +3,13 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:pos_printer_kit/pos_printer_kit.dart';
 import 'package:ssa/app/design_system.dart';
+import 'package:ssa/core/device/device_id_service.dart';
+import 'package:ssa/core/logging/app_logger.dart';
 import 'package:ssa/core/permissions/bluetooth_permission_service.dart';
+import 'package:ssa/features/pos/domain/entities/voucher.dart';
+import 'package:ssa/features/pos/domain/repositories/voucher_cloud_repository.dart';
+import 'package:ssa/features/pos/domain/repositories/voucher_repository.dart';
+import 'package:ssa/features/pos/domain/services/voucher_sync_service.dart';
 import 'package:ssa/features/pos/presentation/pages/pos_home_page.dart';
 import 'package:ssa/shared/providers/app_providers.dart';
 
@@ -20,6 +26,72 @@ class _FakePermissionClient implements BluetoothPermissionClient {
       result == BluetoothPermissionResult.granted;
 }
 
+class _NoopVoucherRepository implements VoucherRepository {
+  @override
+  Future<void> create(Voucher voucher) async {}
+
+  @override
+  Future<void> delete(String id) async {}
+
+  @override
+  Future<List<Voucher>> getAll({int limit = 50, int offset = 0}) async =>
+      const <Voucher>[];
+
+  @override
+  Future<Voucher?> getById(String id) async => null;
+
+  @override
+  Future<List<Voucher>> getPendingSync({int limit = 100}) async =>
+      const <Voucher>[];
+
+  @override
+  Future<List<Voucher>> search(
+    String query, {
+    int limit = 50,
+    int offset = 0,
+  }) async => const <Voucher>[];
+
+  @override
+  Future<void> update(Voucher voucher) async {}
+}
+
+class _NoopVoucherCloudRepository implements VoucherCloudRepository {
+  @override
+  Future<List<Voucher>> fetchAll() async => const <Voucher>[];
+
+  @override
+  Future<void> upsert(Voucher voucher, {required String deviceId}) async {}
+}
+
+class _NoopDeviceIdService extends DeviceIdService {
+  @override
+  Future<String> getOrCreateDeviceId() async => 'test-device';
+}
+
+class _NoopLogger implements AppLogger {
+  @override
+  void debug(String message, {Object? error, StackTrace? stackTrace}) {}
+
+  @override
+  void error(String message, {Object? error, StackTrace? stackTrace}) {}
+
+  @override
+  void info(String message, {Object? error, StackTrace? stackTrace}) {}
+}
+
+VoucherSyncService _noopSyncService() {
+  return VoucherSyncService(
+    voucherRepository: _NoopVoucherRepository(),
+    voucherCloudRepository: _NoopVoucherCloudRepository(),
+    deviceIdService: _NoopDeviceIdService(),
+    currentUserId: () => null,
+    logger: _NoopLogger(),
+    onSyncStarted: () {},
+    onSyncSucceeded: (_) async {},
+    onSyncFailed: (_) {},
+  );
+}
+
 void main() {
   testWidgets('opens printer connect page from app bar button', (tester) async {
     final core = PrinterCore();
@@ -29,6 +101,7 @@ void main() {
         overrides: [
           printerCoreProvider.overrideWith((ref) => core),
           printerCoreInitializedProvider.overrideWith((ref) => true),
+          voucherSyncServiceProvider.overrideWithValue(_noopSyncService()),
           bluetoothPermissionClientProvider.overrideWithValue(
             _FakePermissionClient(BluetoothPermissionResult.granted),
           ),
@@ -54,6 +127,7 @@ void main() {
       ProviderScope(
         overrides: [
           printerCoreProvider.overrideWith((ref) => core),
+          voucherSyncServiceProvider.overrideWithValue(_noopSyncService()),
           bluetoothPermissionClientProvider.overrideWithValue(
             _FakePermissionClient(BluetoothPermissionResult.denied),
           ),
@@ -80,6 +154,7 @@ void main() {
       ProviderScope(
         overrides: [
           printerCoreProvider.overrideWith((ref) => core),
+          voucherSyncServiceProvider.overrideWithValue(_noopSyncService()),
           bluetoothPermissionClientProvider.overrideWithValue(
             _FakePermissionClient(BluetoothPermissionResult.permanentlyDenied),
           ),

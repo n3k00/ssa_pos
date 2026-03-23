@@ -42,6 +42,8 @@ class ReceiptAttachmentCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final hasImage = imagePath != null && imagePath!.isNotEmpty;
+    final hasAccessibleImage =
+        hasImage && File(imagePath!).existsSync();
 
     return Container(
       padding: const EdgeInsets.all(AppDimens.spacing10),
@@ -81,7 +83,7 @@ class ReceiptAttachmentCard extends StatelessWidget {
             ],
           ),
           const SizedBox(height: AppDimens.spacing10),
-          if (hasImage)
+          if (hasAccessibleImage)
             _PreviewImageCard(
               imagePath: imagePath!,
               width: width,
@@ -197,7 +199,21 @@ class _PreviewImageCard extends StatelessWidget {
             border: Border.all(color: AppColors.border),
             borderRadius: BorderRadius.circular(AppDimens.radius12),
           ),
-          child: Image.file(File(imagePath), fit: BoxFit.cover),
+          child: Image.file(
+            File(imagePath),
+            fit: BoxFit.cover,
+            errorBuilder: (context, error, stackTrace) {
+              return Container(
+                color: AppColors.surface,
+                alignment: Alignment.center,
+                child: Icon(
+                  Icons.broken_image_outlined,
+                  size: AppDimens.icon28,
+                  color: AppColors.textHint,
+                ),
+              );
+            },
+          ),
         ),
       ),
     );

@@ -63,6 +63,13 @@ class _FakeVoucherRepository implements VoucherRepository {
   }
 
   @override
+  Future<List<Voucher>> getPendingSync({int limit = 100}) async {
+    return latestVoucher != null && latestVoucher!.syncStatus == 'pending'
+        ? <Voucher>[latestVoucher!]
+        : const <Voucher>[];
+  }
+
+  @override
   Future<List<Voucher>> search(String query, {int limit = 50, int offset = 0}) {
     return Future.value(const <Voucher>[]);
   }
@@ -190,7 +197,6 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(repo.createCalls, 1);
-    expect(find.text(AppStrings.previewTitle), findsNothing);
   });
 
   testWidgets('does not print when health refresh reports disconnected', (

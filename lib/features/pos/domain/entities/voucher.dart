@@ -16,6 +16,9 @@ class Voucher {
     this.itemImagePath,
     this.dispatchReceiptImagePath,
     this.dispatchReceiptSavedAt,
+    this.syncStatus = 'pending',
+    this.syncedAt,
+    this.createdDeviceId,
   });
 
   final String id;
@@ -32,6 +35,9 @@ class Voucher {
   final String? itemImagePath;
   final String? dispatchReceiptImagePath;
   final String? dispatchReceiptSavedAt;
+  final String syncStatus;
+  final String? syncedAt;
+  final String? createdDeviceId;
 
   Voucher copyWith({
     String? id,
@@ -48,6 +54,9 @@ class Voucher {
     Object? itemImagePath = _unset,
     Object? dispatchReceiptImagePath = _unset,
     Object? dispatchReceiptSavedAt = _unset,
+    String? syncStatus,
+    Object? syncedAt = _unset,
+    Object? createdDeviceId = _unset,
   }) {
     return Voucher(
       id: id ?? this.id,
@@ -72,6 +81,11 @@ class Voucher {
       dispatchReceiptSavedAt: identical(dispatchReceiptSavedAt, _unset)
           ? this.dispatchReceiptSavedAt
           : dispatchReceiptSavedAt as String?,
+      syncStatus: syncStatus ?? this.syncStatus,
+      syncedAt: identical(syncedAt, _unset) ? this.syncedAt : syncedAt as String?,
+      createdDeviceId: identical(createdDeviceId, _unset)
+          ? this.createdDeviceId
+          : createdDeviceId as String?,
     );
   }
 
@@ -91,6 +105,9 @@ class Voucher {
       'item_image_path': itemImagePath,
       'dispatch_receipt_image_path': dispatchReceiptImagePath,
       'dispatch_receipt_saved_at': dispatchReceiptSavedAt,
+      'sync_status': syncStatus,
+      'synced_at': syncedAt,
+      'created_device_id': createdDeviceId,
     };
   }
 
@@ -110,6 +127,9 @@ class Voucher {
       itemImagePath: map['item_image_path'] as String?,
       dispatchReceiptImagePath: map['dispatch_receipt_image_path'] as String?,
       dispatchReceiptSavedAt: map['dispatch_receipt_saved_at'] as String?,
+      syncStatus: map['sync_status'] as String? ?? 'pending',
+      syncedAt: map['synced_at'] as String?,
+      createdDeviceId: map['created_device_id'] as String?,
     );
   }
 }

@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:ui';
 
+import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:ssa/app/app.dart';
@@ -8,31 +9,36 @@ import 'package:ssa/app/config/app_config.dart';
 import 'package:ssa/app/config/app_flavor.dart';
 import 'package:ssa/shared/providers/app_providers.dart';
 
-void bootstrap(AppFlavor flavor) {
-  final appConfig = AppConfig.fromEnvironment(flavor);
-  final container = ProviderContainer(
-    overrides: [
-      appConfigProvider.overrideWithValue(appConfig),
-    ],
-  );
-  final logger = container.read(appLoggerProvider);
+Future<void> bootstrap(AppFlavor flavor) async {
+  late final ProviderContainer container;
 
-  FlutterError.onError = (details) {
-    logger.error(
-      'Flutter framework error',
-      error: details.exception,
-      stackTrace: details.stack,
-    );
-    FlutterError.presentError(details);
-  };
+  await runZonedGuarded(
+    () async {
+      WidgetsFlutterBinding.ensureInitialized();
+      await Firebase.initializeApp();
 
-  PlatformDispatcher.instance.onError = (error, stack) {
-    logger.error('Platform error', error: error, stackTrace: stack);
-    return true;
-  };
+      final appConfig = AppConfig.fromEnvironment(flavor);
+      container = ProviderContainer(
+        overrides: [
+          appConfigProvider.overrideWithValue(appConfig),
+        ],
+      );
+      final logger = container.read(appLoggerProvider);
 
-  runZonedGuarded(
-    () {
+      FlutterError.onError = (details) {
+        logger.error(
+          'Flutter framework error',
+          error: details.exception,
+          stackTrace: details.stack,
+        );
+        FlutterError.presentError(details);
+      };
+
+      PlatformDispatcher.instance.onError = (error, stack) {
+        logger.error('Platform error', error: error, stackTrace: stack);
+        return true;
+      };
+
       logger.info('Bootstrap start (${appConfig.flavorName})');
       runApp(
         UncontrolledProviderScope(
@@ -42,6 +48,7 @@ void bootstrap(AppFlavor flavor) {
       );
     },
     (error, stack) {
+      final logger = container.read(appLoggerProvider);
       logger.error('Uncaught zone error', error: error, stackTrace: stack);
     },
   );

@@ -28,6 +28,11 @@ class VoucherRepositoryImpl implements VoucherRepository {
   }
 
   @override
+  Future<List<Voucher>> getPendingSync({int limit = 100}) {
+    return _localDataSource.getPendingSync(limit: limit);
+  }
+
+  @override
   Future<List<Voucher>> getAll({int limit = 50, int offset = 0}) {
     return _localDataSource.getAll(limit: limit, offset: offset);
   }

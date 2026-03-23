@@ -14,7 +14,7 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase.forTesting(super.executor);
 
   @override
-  int get schemaVersion => 3;
+  int get schemaVersion => 4;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -31,6 +31,11 @@ class AppDatabase extends _$AppDatabase {
               vouchers,
               vouchers.dispatchReceiptSavedAt,
             );
+          }
+          if (from < 4) {
+            await m.addColumn(vouchers, vouchers.syncStatus);
+            await m.addColumn(vouchers, vouchers.syncedAt);
+            await m.addColumn(vouchers, vouchers.createdDeviceId);
           }
           await _ensureVoucherIndexes();
         },

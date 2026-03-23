@@ -18,6 +18,10 @@ class Vouchers extends Table {
       text().named('dispatch_receipt_image_path').nullable()();
   TextColumn get dispatchReceiptSavedAt =>
       text().named('dispatch_receipt_saved_at').nullable()();
+  TextColumn get syncStatus =>
+      text().named('sync_status').withDefault(const Constant('pending'))();
+  TextColumn get syncedAt => text().named('synced_at').nullable()();
+  TextColumn get createdDeviceId => text().named('created_device_id').nullable()();
 
   @override
   Set<Column<Object>> get primaryKey => {id};

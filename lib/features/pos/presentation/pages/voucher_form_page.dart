@@ -8,6 +8,7 @@ import 'package:ssa/features/pos/data/datasources/voucher_image_local_datasource
 import 'package:ssa/features/pos/domain/entities/voucher.dart';
 import 'package:ssa/features/pos/presentation/pages/voucher_print_preview_page.dart';
 import 'package:ssa/shared/providers/app_providers.dart';
+import 'package:uuid/uuid.dart';
 
 class VoucherFormPage extends StatelessWidget {
   const VoucherFormPage({super.key});
@@ -41,6 +42,7 @@ class VoucherFormSection extends ConsumerStatefulWidget {
 }
 
 class VoucherFormSectionState extends ConsumerState<VoucherFormSection> {
+  static const Uuid _uuid = Uuid();
   final _formKey = GlobalKey<FormState>();
 
   final TextEditingController _nameController = TextEditingController();
@@ -179,7 +181,7 @@ class VoucherFormSectionState extends ConsumerState<VoucherFormSection> {
 
     final now = DateTime.now();
     final voucher = Voucher(
-      id: 'v_${now.microsecondsSinceEpoch}',
+      id: _uuid.v4(),
       createdAt: now,
       updatedAt: now,
       dateAndTime: now.toIso8601String(),
@@ -197,6 +199,9 @@ class VoucherFormSectionState extends ConsumerState<VoucherFormSection> {
       itemImagePath: _itemImagePath,
       dispatchReceiptImagePath: null,
       dispatchReceiptSavedAt: null,
+      syncStatus: 'pending',
+      syncedAt: null,
+      createdDeviceId: null,
     );
 
     if (!mounted) {

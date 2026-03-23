@@ -27,6 +27,35 @@ class AppStrings {
   static String get appName => _resolve('SSA POS', (l10n) => l10n.appName);
   static String get homeTitle =>
       _resolve('SSA POS Home', (l10n) => l10n.homeTitle);
+  static String get loginTitle =>
+      _resolve('Sign In', (l10n) => l10n.loginTitle);
+  static String get loginSubtitle => _resolve(
+    'Use your phone number and password to continue.',
+    (l10n) => l10n.loginSubtitle,
+  );
+  static String get signIn => _resolve('Sign In', (l10n) => l10n.signIn);
+  static String get phoneNumberLabel =>
+      _resolve('Phone Number', (l10n) => l10n.phoneNumberLabel);
+  static String get passwordLabel =>
+      _resolve('Password', (l10n) => l10n.passwordLabel);
+  static String get invalidPhoneNumber => _resolve(
+    'Enter a valid Myanmar phone number.',
+    (l10n) => l10n.invalidPhoneNumber,
+  );
+  static String get loginFailedGeneric => _resolve(
+    'Invalid phone number or password.',
+    (l10n) => l10n.loginFailedGeneric,
+  );
+  static String get launchStarting =>
+      _resolve('Starting SSA POS...', (l10n) => l10n.launchStarting);
+  static String get launchCheckingSession => _resolve(
+    'Checking session...',
+    (l10n) => l10n.launchCheckingSession,
+  );
+  static String get authStateError => _resolve(
+    'Could not check the login state.',
+    (l10n) => l10n.authStateError,
+  );
   static String get connectPrinter =>
       _resolve('Connect Printer', (l10n) => l10n.connectPrinter);
   static String get menu => _resolve('Menu', (l10n) => l10n.menu);
@@ -40,6 +69,12 @@ class AppStrings {
   static String get voucherListTitle =>
       _resolve('Vouchers', (l10n) => l10n.voucherListTitle);
   static String get settings => _resolve('Settings', (l10n) => l10n.settings);
+  static String get profileSettings =>
+      _resolve('Profile', (l10n) => l10n.profileSettings);
+  static String get profileSettingsHint => _resolve(
+    'View the account phone number and sync status',
+    (l10n) => l10n.profileSettingsHint,
+  );
   static String get printerSettings =>
       _resolve('Printer Settings', (l10n) => l10n.printerSettings);
   static String get receiptSettingsTitle =>
@@ -72,6 +107,30 @@ class AppStrings {
       _resolve('Myanmar', (l10n) => l10n.languageMyanmar);
   static String get languageUpdated =>
       _resolve('Language updated.', (l10n) => l10n.languageUpdated);
+  static String get syncNow => _resolve('Sync Now', (l10n) => l10n.syncNow);
+  static String get lastSyncTimeLabel =>
+      _resolve('Last Sync Time', (l10n) => l10n.lastSyncTimeLabel);
+  static String get syncStatusLabel =>
+      _resolve('Sync Status', (l10n) => l10n.syncStatusLabel);
+  static String get syncingNow =>
+      _resolve('Syncing...', (l10n) => l10n.syncingNow);
+  static String get syncFailed =>
+      _resolve('Sync failed', (l10n) => l10n.syncFailed);
+  static String get syncReady =>
+      _resolve('Up to date', (l10n) => l10n.syncReady);
+  static String get syncNotStarted =>
+      _resolve('Not synced yet', (l10n) => l10n.syncNotStarted);
+  static String get syncNever =>
+      _resolve('Never', (l10n) => l10n.syncNever);
+  static String get logout => _resolve('Logout', (l10n) => l10n.logout);
+  static String get logoutConfirmTitle =>
+      _resolve('Logout', (l10n) => l10n.logoutConfirmTitle);
+  static String get logoutConfirmMessage => _resolve(
+    'Do you want to sign out now?',
+    (l10n) => l10n.logoutConfirmMessage,
+  );
+  static String get yes => _resolve('Yes', (l10n) => l10n.yes);
+  static String get no => _resolve('No', (l10n) => l10n.no);
   static String get exportBackup =>
       _resolve('Export Full Backup', (l10n) => l10n.exportBackup);
   static String get exportDataOnlyBackup =>

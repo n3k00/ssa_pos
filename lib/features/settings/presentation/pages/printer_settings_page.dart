@@ -7,6 +7,7 @@ import 'package:ssa/core/settings/receipt_settings_service.dart';
 import 'package:ssa/features/settings/presentation/pages/backup_restore_page.dart';
 import 'package:ssa/features/settings/presentation/pages/language_settings_page.dart';
 import 'package:ssa/features/settings/presentation/pages/printer_tuning_editor_page.dart';
+import 'package:ssa/features/settings/presentation/pages/profile_settings_page.dart';
 import 'package:ssa/features/settings/presentation/pages/receipt_header_editor_page.dart';
 import 'package:ssa/shared/providers/app_providers.dart';
 import 'package:ssa/shared/widgets/app_drawer.dart';
@@ -107,6 +108,18 @@ class _PrinterSettingsPageState extends ConsumerState<PrinterSettingsPage> {
           : ListView(
               padding: const EdgeInsets.all(AppDimens.pagePadding),
               children: [
+                _SettingsNavTile(
+                  title: AppStrings.profileSettings,
+                  subtitle: AppStrings.profileSettingsHint,
+                  onTap: () {
+                    Navigator.of(context).push(
+                      MaterialPageRoute<void>(
+                        builder: (_) => const ProfileSettingsPage(),
+                      ),
+                    );
+                  },
+                ),
+                const SizedBox(height: AppDimens.spacing12),
                 _SettingsNavTile(
                   title: AppStrings.receiptHeaderSettings,
                   subtitle:

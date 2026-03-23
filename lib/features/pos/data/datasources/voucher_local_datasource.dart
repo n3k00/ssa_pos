@@ -32,6 +32,16 @@ class VoucherLocalDataSource {
     return _toDomain(row);
   }
 
+  Future<List<Voucher>> getPendingSync({int limit = 100}) async {
+    final query = _database.select(_database.vouchers)
+      ..where((table) => table.syncStatus.equals('pending'))
+      ..orderBy([(table) => OrderingTerm.asc(table.createdAt)])
+      ..limit(limit);
+
+    final rows = await query.get();
+    return rows.map(_toDomain).toList(growable: false);
+  }
+
   Future<List<Voucher>> getAll({int limit = 50, int offset = 0}) async {
     final query = _database.select(_database.vouchers)
       ..orderBy([(table) => OrderingTerm.desc(table.createdAt)])
@@ -82,6 +92,9 @@ class VoucherLocalDataSource {
       itemImagePath: Value(voucher.itemImagePath),
       dispatchReceiptImagePath: Value(voucher.dispatchReceiptImagePath),
       dispatchReceiptSavedAt: Value(voucher.dispatchReceiptSavedAt),
+      syncStatus: Value(voucher.syncStatus),
+      syncedAt: Value(voucher.syncedAt),
+      createdDeviceId: Value(voucher.createdDeviceId),
     );
   }
 
@@ -101,6 +114,9 @@ class VoucherLocalDataSource {
       itemImagePath: row.itemImagePath,
       dispatchReceiptImagePath: row.dispatchReceiptImagePath,
       dispatchReceiptSavedAt: row.dispatchReceiptSavedAt,
+      syncStatus: row.syncStatus,
+      syncedAt: row.syncedAt,
+      createdDeviceId: row.createdDeviceId,
     );
   }
 }

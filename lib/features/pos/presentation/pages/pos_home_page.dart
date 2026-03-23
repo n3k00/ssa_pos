@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:permission_handler/permission_handler.dart';
@@ -25,6 +27,7 @@ class _PosHomePageState extends ConsumerState<PosHomePage> {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _initializeOnStartup();
+      unawaited(ref.read(voucherSyncServiceProvider).syncIfAuthenticated());
     });
   }
 

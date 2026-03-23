@@ -34,6 +34,14 @@ class _FakeVoucherRepository implements VoucherRepository {
   }
 
   @override
+  Future<List<Voucher>> getPendingSync({int limit = 100}) async {
+    return _items
+        .where((voucher) => voucher.syncStatus == 'pending')
+        .take(limit)
+        .toList(growable: false);
+  }
+
+  @override
   Future<List<Voucher>> search(String query, {int limit = 50, int offset = 0}) async {
     final q = query.toLowerCase();
     return _items

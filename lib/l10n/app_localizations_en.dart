@@ -15,6 +15,36 @@ class AppLocalizationsEn extends AppLocalizations {
   String get homeTitle => 'SSA POS Home';
 
   @override
+  String get loginTitle => 'Sign In';
+
+  @override
+  String get loginSubtitle => 'Use your phone number and password to continue.';
+
+  @override
+  String get signIn => 'Sign In';
+
+  @override
+  String get phoneNumberLabel => 'Phone Number';
+
+  @override
+  String get passwordLabel => 'Password';
+
+  @override
+  String get invalidPhoneNumber => 'Enter a valid Myanmar phone number.';
+
+  @override
+  String get loginFailedGeneric => 'Invalid phone number or password.';
+
+  @override
+  String get launchStarting => 'Starting SSA POS...';
+
+  @override
+  String get launchCheckingSession => 'Checking session...';
+
+  @override
+  String get authStateError => 'Could not check the login state.';
+
+  @override
   String get connectPrinter => 'Connect Printer';
 
   @override
@@ -37,6 +67,12 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get settings => 'Settings';
+
+  @override
+  String get profileSettings => 'Profile';
+
+  @override
+  String get profileSettingsHint => 'View the account phone number and sync status';
 
   @override
   String get printerSettings => 'Printer Settings';
@@ -76,6 +112,45 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get languageUpdated => 'Language updated.';
+
+  @override
+  String get syncNow => 'Sync Now';
+
+  @override
+  String get lastSyncTimeLabel => 'Last Sync Time';
+
+  @override
+  String get syncStatusLabel => 'Sync Status';
+
+  @override
+  String get syncingNow => 'Syncing...';
+
+  @override
+  String get syncFailed => 'Sync failed';
+
+  @override
+  String get syncReady => 'Up to date';
+
+  @override
+  String get syncNotStarted => 'Not synced yet';
+
+  @override
+  String get syncNever => 'Never';
+
+  @override
+  String get logout => 'Logout';
+
+  @override
+  String get logoutConfirmTitle => 'Logout';
+
+  @override
+  String get logoutConfirmMessage => 'Do you want to sign out now?';
+
+  @override
+  String get yes => 'Yes';
+
+  @override
+  String get no => 'No';
 
   @override
   String get exportBackup => 'Export Full Backup';

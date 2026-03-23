@@ -4,7 +4,7 @@ import 'package:ssa/core/db/app_database.dart';
 
 void main() {
 test(
-  'upgrades legacy vouchers schema to include payment_status and dispatch receipt metadata',
+  'upgrades legacy vouchers schema to include sync and dispatch receipt metadata',
   () async {
     final executor = NativeDatabase.memory(
       setup: (rawDb) {
@@ -47,6 +47,9 @@ test(
         .toSet();
     expect(columnNames, contains('payment_status'));
     expect(columnNames, contains('dispatch_receipt_saved_at'));
+    expect(columnNames, contains('sync_status'));
+    expect(columnNames, contains('synced_at'));
+    expect(columnNames, contains('created_device_id'));
 
     final indexes = await db.customSelect('PRAGMA index_list(vouchers)').get();
     final indexNames = indexes
