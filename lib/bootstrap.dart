@@ -10,7 +10,29 @@ import 'package:ssa/app/config/app_flavor.dart';
 import 'package:ssa/shared/providers/app_providers.dart';
 
 Future<void> bootstrap(AppFlavor flavor) async {
-  late final ProviderContainer container;
+  ProviderContainer? container;
+
+  void logBootstrapError(
+    String message, {
+    Object? error,
+    StackTrace? stackTrace,
+  }) {
+    final currentContainer = container;
+    if (currentContainer != null) {
+      currentContainer.read(
+        appLoggerProvider,
+      ).error(message, error: error, stackTrace: stackTrace);
+      return;
+    }
+
+    debugPrint(message);
+    if (error != null) {
+      debugPrint(error.toString());
+    }
+    if (stackTrace != null) {
+      debugPrint(stackTrace.toString());
+    }
+  }
 
   await runZonedGuarded(
     () async {
@@ -23,10 +45,10 @@ Future<void> bootstrap(AppFlavor flavor) async {
           appConfigProvider.overrideWithValue(appConfig),
         ],
       );
-      final logger = container.read(appLoggerProvider);
+      final logger = container!.read(appLoggerProvider);
 
       FlutterError.onError = (details) {
-        logger.error(
+        logBootstrapError(
           'Flutter framework error',
           error: details.exception,
           stackTrace: details.stack,
@@ -35,21 +57,24 @@ Future<void> bootstrap(AppFlavor flavor) async {
       };
 
       PlatformDispatcher.instance.onError = (error, stack) {
-        logger.error('Platform error', error: error, stackTrace: stack);
+        logBootstrapError('Platform error', error: error, stackTrace: stack);
         return true;
       };
 
       logger.info('Bootstrap start (${appConfig.flavorName})');
       runApp(
         UncontrolledProviderScope(
-          container: container,
+          container: container!,
           child: const SsaApp(),
         ),
       );
     },
     (error, stack) {
-      final logger = container.read(appLoggerProvider);
-      logger.error('Uncaught zone error', error: error, stackTrace: stack);
+      logBootstrapError(
+        'Uncaught zone error',
+        error: error,
+        stackTrace: stack,
+      );
     },
   );
 }

@@ -229,7 +229,7 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                               obscureText: _obscurePassword,
                               onFieldSubmitted: (_) => _submit(),
                               decoration: InputDecoration(
-                                hintText: '••••••••',
+                                hintText: AppStrings.passwordLabel,
                                 prefixIcon: const Icon(Icons.lock_outline),
                                 suffixIcon: IconButton(
                                   onPressed: _submitting

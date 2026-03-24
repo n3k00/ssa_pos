@@ -1,18 +1,13 @@
-// This is a basic Flutter widget test.
-//
-// To perform an interaction with a widget in your test, use the WidgetTester
-// utility in the flutter_test package. For example, you can send tap and scroll
-// gestures. You can also use WidgetTester to find child widgets in the widget
-// tree, read text, and verify that the values of widget properties are correct.
-
-import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_test/flutter_test.dart';
 import 'package:ssa/app/app.dart';
+import 'package:ssa/app/constants/app_strings.dart';
 
 void main() {
-  testWidgets('App boots with POS home screen', (WidgetTester tester) async {
+  testWidgets('App boots with launch screen', (WidgetTester tester) async {
     await tester.pumpWidget(const ProviderScope(child: SsaApp()));
 
-    expect(find.text('SSA POS Home'), findsOneWidget);
+    expect(find.text(AppStrings.launchStarting), findsOneWidget);
+    expect(find.text(AppStrings.appName), findsOneWidget);
   });
 }
